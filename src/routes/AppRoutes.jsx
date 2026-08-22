@@ -2,12 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
-import AdminDashboard from "../pages/AdminDashboard";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import StudentDashboard from "../pages/StudentDashboard";
 import RoleRoute from "./RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
-import Positions from "../pages/Positions";
-import Candidates from "../pages/Candidates";
+import Application from "../pages/admin/Application";
 
 function AppRoutes() {
   return (
@@ -23,8 +22,8 @@ function AppRoutes() {
           }
         >
             <Route index element={<AdminDashboard />} />
-            <Route path="positions" element={<Positions />} />
-            <Route path="candidates" element={<Candidates />} />
+            <Route path="application" element={<Application />} />
+            
         </Route>
 
         <Route
