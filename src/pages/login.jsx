@@ -70,7 +70,8 @@ const redirectUser = async () => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Voting System</h1>
+        <h1>Voting <span> System </span> 
+        </h1>
         <p>Please sign in to continue.</p>
 
         <form onSubmit={handleLogin}>

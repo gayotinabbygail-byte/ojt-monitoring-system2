@@ -8,10 +8,10 @@ import {
   LayoutDashboard,
   BookOpen,
   FileUser,
-  Building2,
+  Handshake,
   FileAxis3d,
   ListChecks,
-  RotateCwFadingClock,
+  BookOpenCheck,
   ChartCandlestick,
   Summary,
   ListCheck,
@@ -73,8 +73,8 @@ function AdminLayout() {
 
           {/* Application Title */}
           <div className="admin-title">
-            <img src={hero} alt="Jang Printz" className="admin-logo" />
-            <h2>Jang Printz</h2>
+            <img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
+            <h2>OJT Monitoring System LCCI</h2>
           </div>
         </div>
 
@@ -92,9 +92,6 @@ function AdminLayout() {
 
       <div className="admin-body">
         <aside className="sidebar">
-          {/* MAIN */}
-          <div className="sidebar-section">
-            <div className="sidebar-section-title">MAIN</div>
 
           <NavLink
             to="/admin"
@@ -111,11 +108,6 @@ function AdminLayout() {
 
               <span className="nav-text">Dashboard</span>
             </NavLink>
-          </div>
-
-          {/* APPLICATION */}
-          <div className="sidebar-section">
-            <div className="sidebar-section-title">APPLICATION</div>
 
           <NavLink
             to="/admin/application"
@@ -127,12 +119,175 @@ function AdminLayout() {
             title="Application"
           >
             <span className="nav-icon">
-                <BookOpen size={18} />
+                <FileUser size={18} />
               </span>
 
               <span className="nav-text">Application</span>
             </NavLink>
-          </div>
+
+            <NavLink
+            to="/admin/students"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Students"
+          >
+            <span className="nav-icon">
+                <BookOpen size={18} />
+              </span>
+
+              <span className="nav-text">Students</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/partnercompanies"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Partner Companies"
+          >
+            <span className="nav-icon">
+                <Handshake size={18} />
+              </span>
+
+              <span className="nav-text">Partner Companies</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/ojtcoordinators"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="OJT Coordinators"
+          >
+            <span className="nav-icon">
+                <FileAxis3d size={18} />
+              </span>
+
+              <span className="nav-text">OJT Coordinators</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/attendance"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Attendance"
+          >
+            <span className="nav-icon">
+                <ListChecks size={18} />
+              </span>
+
+              <span className="nav-text">Attendance</span>
+            </NavLink>
+
+                        <NavLink
+            to="/admin/ojthours"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="OJT Hours"
+          >
+            <span className="nav-icon">
+                <BookOpenCheck size={18} />
+              </span>
+
+              <span className="nav-text">OJT Hours</span>
+            </NavLink>
+
+                        <NavLink
+            to="/admin/Evaluation"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Evaluation"
+          >
+            <span className="nav-icon">
+                <ChartCandlestick size={18} />
+              </span>
+
+              <span className="nav-text">Evaluation</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/Ojtreports"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Ojt Reports"
+          >
+            <span className="nav-icon">
+                <Summary size={18} />
+              </span>
+
+              <span className="nav-text">OJT Reports</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/Attendancereports"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Attendance Reports"
+          >
+            <span className="nav-icon">
+                <ListCheck size={18} />
+              </span>
+
+              <span className="nav-text">Attendance Reports</span>
+            </NavLink>
+
+            <NavLink
+            to="/admin/Users"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Users"
+          >
+            <span className="nav-icon">
+                <Users size={18} />
+              </span>
+
+              <span className="nav-text">Users</span>
+            </NavLink>
+
+                        <NavLink
+            to="/admin/Settings"
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Settings"
+          >
+            <span className="nav-icon">
+                <Settings size={18} />
+              </span>
+
+              <span className="nav-text">Settings</span>
+            </NavLink>
+
+
+
+
 
           
         </aside>

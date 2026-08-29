@@ -1,9 +1,11 @@
 function AdminDashboard() {
     return (
         <div>
-            <h1>Admin Dashboard</h1>
-            <p>Welcome, Administrator!</p>
-        </div>
+            <div class="stat-box">Total OJT Students: 100</div>
+            
+                <div class="stat-box">Active: 90</div>
+                <div class="stat-box">Completed: 25</div>
+            </div>
     );
 }
 
