@@ -1,4 +1,4 @@
-function OjtCoordinator() {
+function OjtCoordinators() {
     return (
         <>
         <h1>OJT Coordinators</h1>
@@ -8,4 +8,4 @@ function OjtCoordinator() {
   );
 }
 
-export default OJTCoordinator;
+export default OjtCoordinators;

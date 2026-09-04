@@ -9,7 +9,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import Application from "../pages/admin/Application";
 import Students from "../pages/admin/Students";
 import PartnerCompanies from "../pages/admin/PartnerCompanies";
-import OjtCoordinator from "../pages/admin/OjtCoordinator";
+import OjtCoordinators from "../pages/admin/OjtCoordinators";
 import Attendance from "../pages/admin/Attendance";
 import OjtHours from "../pages/admin/OjtHours";
 import Evaluation from "../pages/admin/Evaluation";
@@ -35,7 +35,7 @@ function AppRoutes() {
             <Route path="students" element={<Students />} />
             <Route path="application" element={<Application />} />
             <Route path="partnercompanies" element={<PartnerCompanies />} />
-            <Route path="ojtcoordinator" element={<OjtCoordinator />} />
+            <Route path="ojtcoordinators" element={<OjtCoordinators/>} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="ojthours" element={<OjtHours />} />
             <Route path="evaluation" element={<Evaluation />} />
