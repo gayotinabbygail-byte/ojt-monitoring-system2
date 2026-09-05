@@ -91,6 +91,31 @@
     font-size: 14px;
 }
 
+.login-mode-button {
+    width: 100%;
+    margin-top: 17px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2868c7;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.login-mode-button:hover {
+    color: #1f59ae;
+    transform: none;
+}
+
+.login-error {
+    margin: -2px 0 16px;
+    color: #c24c52;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 .input-group {
     margin-bottom: 18px;
 }

@@ -15,6 +15,7 @@ import AttendanceReports from "../pages/admin/AttendanceReport";
 import Users from "../pages/admin/Users";
 import Settings from "../pages/admin/Setting";
 import OjtCoordinators from "../pages/admin/OjtCoordinators";
+import CoordinatorsDashboard from "../pages/admin/Coordinator/CoordinatorsDashboard";
 
 function AppRoutes() {
   return (
@@ -48,6 +49,14 @@ function AppRoutes() {
           element={
             <RoleRoute allowedRole="student">
               <StudentDashboard />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/coordinator"
+          element={
+            <RoleRoute allowedRole="coordinator">
+              <CoordinatorsDashboard />
             </RoleRoute>
           }
         />

@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export const getUserData = async (uid) => {
@@ -10,4 +10,8 @@ export const getUserData = async (uid) => {
     }
 
     return null;
+};
+
+export const createUserProfile = async (uid, profile) => {
+    await setDoc(doc(db, "users", uid), profile);
 };

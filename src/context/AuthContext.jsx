@@ -10,25 +10,29 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            try {
+                if (!currentUser) {
+                    setUser(null);
+                    return;
+                }
 
-        if (currentUser) {
-            const userData = await getUserData(currentUser.uid);
+                const userData = await getUserData(currentUser.uid);
 
-            setUser({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                ...userData
-            });
+                setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    ...(userData || {})
+                });
+            } catch (error) {
+                console.error("Unable to load the authenticated user profile:", error);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        });
 
-        } else {
-            setUser(null);
-        }
-
-        setLoading(false);
-    });
-
-    return unsubscribe;
-}, []);
+        return unsubscribe;
+    }, []);
 
 
     return (
