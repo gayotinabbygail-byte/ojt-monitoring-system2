@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserData } from "../services/userService";
+import { ArrowRight, BriefcaseBusiness } from "lucide-react";
 
 function Login() {
   const { user } = useAuth();
@@ -69,15 +70,23 @@ const redirectUser = async () => {
 
   return (
     <div className="login-container">
+      <div className="login-story">
+        <div className="login-mark"><BriefcaseBusiness size={21} /></div>
+        <p className="login-overline">LCCI · OJT MONITORING</p>
+        <h1>Make every placement count.</h1>
+        <p className="login-story-copy">A clearer view of students, partners, attendance, and progress, all in one place.</p>
+        <div className="login-story-line"><span /> Built for better coordination</div>
+      </div>
       <div className="login-card">
-        <h1>Voting <span> System </span> 
-        </h1>
-        <p>Please sign in to continue.</p>
+        <p className="login-card-kicker">Welcome back</p>
+        <h2>Sign in to your workspace</h2>
+        <p className="login-card-copy">Use your LCCI account to continue.</p>
 
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <label>Email</label>
+            <label htmlFor="email">Email address</label>
             <input
+              id="email"
               type="email"
               placeholder="Enter your email"
               value={email}
@@ -86,8 +95,9 @@ const redirectUser = async () => {
           </div>
 
           <div className="input-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               placeholder="Enter your password"
               value={password}
@@ -95,7 +105,7 @@ const redirectUser = async () => {
             />
           </div>
 
-          <button type="submit">Login</button>
+          <button type="submit">Continue <ArrowRight size={17} /></button>
         </form>
       </div>
     </div>

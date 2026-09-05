@@ -4,7 +4,7 @@ import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import StudentDashboard from "../pages/StudentDashboard";
-import RoleRoute from "./RoleRoute";
+import RoleRoute from "../services/RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
 import Application from "../pages/admin/Application";
 import Students from "../pages/admin/Students";
