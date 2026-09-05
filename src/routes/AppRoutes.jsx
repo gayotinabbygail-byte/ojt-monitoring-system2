@@ -14,6 +14,7 @@ import OjtReports from "../pages/admin/OjtReports";
 import AttendanceReports from "../pages/admin/AttendanceReport";
 import Users from "../pages/admin/Users";
 import Settings from "../pages/admin/Setting";
+import OjtCoordinators from "../pages/admin/OjtCoordinators";
 
 function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ function AppRoutes() {
             <Route path="ojtreports" element={<OjtReports />} />
             <Route path="attendancereports" element={<AttendanceReports />} />
             <Route path="users" element={<Users />} />
+            <Route path="ojtcoordinators" element={<OjtCoordinators />} />
             <Route path="settings" element={<Settings />} />
         </Route>
 
