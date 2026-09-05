@@ -20,12 +20,11 @@ import {
   getDocs,
   orderBy,
   query,
-  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../../services/firebase";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 import {
   createManagedUser,
@@ -105,7 +104,11 @@ function Users() {
 
   // INITIAL LOAD
   useEffect(() => {
-    loadUsers();
+    const timer = setTimeout(() => {
+      loadUsers();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   //FILTER USERS

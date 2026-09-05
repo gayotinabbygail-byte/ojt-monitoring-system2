@@ -110,21 +110,30 @@ export const createManagedUser = async ({
    // FIREBASE ERRORS
     switch (error.code) {
       case "auth/email-already-in-use":
-        throw new Error("This email address is already registered.");
+        throw new Error("This email address is already registered.", {
+          cause: error,
+        });
 
       case "auth/invalid-email":
-        throw new Error("Please enter a valid email address.");
+        throw new Error("Please enter a valid email address.", {
+          cause: error,
+        });
 
       case "auth/weak-password":
-        throw new Error("The generated password was rejected by Firebase.");
+        throw new Error("The generated password was rejected by Firebase.", {
+          cause: error,
+        });
 
       case "permission-denied":
-
       case "firestore/permission-denied":
-        throw new Error("You do not have permission to create this user.");
+        throw new Error("You do not have permission to create this user.", {
+          cause: error,
+        });
 
       default:
-        throw new Error(error.message || "Failed to create user account.");
+        throw new Error(error.message || "Failed to create user account.", {
+          cause: error,
+        });
     }
   }
 };
@@ -172,14 +181,19 @@ export const completePasswordChange = async (user, newPassword) => {
     if (error.code === "auth/requires-recent-login") {
       throw new Error(
         "For security, please log in again before changing your password.",
+        { cause: error },
       );
     }
 
     if (error.code === "auth/weak-password") {
-      throw new Error("Password must be at least 6 characters.");
+      throw new Error("Password must be at least 6 characters.", {
+        cause: error,
+      });
     }
 
-    throw new Error(error.message || "Failed to change password.");
+    throw new Error(error.message || "Failed to change password.", {
+      cause: error,
+    });
   }
 };
 

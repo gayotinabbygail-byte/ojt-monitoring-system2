@@ -3,7 +3,7 @@ import { useState } from "react";
 import { login } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { getUserData } from "../services/userService";
 import { ArrowRight, BriefcaseBusiness } from "lucide-react";
 

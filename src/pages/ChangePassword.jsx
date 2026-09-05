@@ -8,8 +8,8 @@ import {
   deleteField,
 } from "firebase/firestore";
 
-import { auth, db } from "../services/firebase";
-import { useAuth } from "../context/AuthContext";
+import { db } from "../services/firebase";
+import { useAuth } from "../context/useAuth";
 
 import "../styles/ChangePassword.css";
 
