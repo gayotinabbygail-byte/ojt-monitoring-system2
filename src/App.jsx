@@ -1,10 +1,13 @@
 import AppRoutes from "./routes/AppRoutes";
 import { AuthProvider } from "./context/AuthContext";
+import { AttendanceProvider } from "./context/AttendanceContext";
 
 function App() {
     return (
         <AuthProvider>
-            <AppRoutes />
+            <AttendanceProvider>
+                <AppRoutes />
+            </AttendanceProvider>
         </AuthProvider>
     );
 }
