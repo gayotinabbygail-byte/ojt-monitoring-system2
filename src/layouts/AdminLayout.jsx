@@ -18,6 +18,7 @@ import {
   Users,
   Settings,
   Menu,
+  LogOut,
 } from "lucide-react";
 
 // Importing the logo image
@@ -26,6 +27,7 @@ import hero from "../assets/hero.png";
 function AdminLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const basePath = user?.role === "coordinator" ? "/coordinator" : "/admin";
 
   // State to manage the sidebar's open/closed state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -80,8 +82,10 @@ function AdminLayout() {
 
         {/* Admin User */}
         <div className="admin-user">
-          <span title={`${user?.firstName} ${user?.lastName}`}>
-            {user?.firstName} {user?.lastName}
+          <span title={user?.email || "Admin"}>
+            {user?.firstName || user?.lastName
+              ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+              : user?.email || "Admin"}
           </span>
 
           <button type="button" className="logout-btn" onClick={handleLogout}>
@@ -94,7 +98,7 @@ function AdminLayout() {
         <aside className="sidebar">
 
           <NavLink
-            to="/admin"
+            to={basePath}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -110,23 +114,23 @@ function AdminLayout() {
             </NavLink>
 
           <NavLink
-            to="/admin/application"
+            to={`${basePath}/application`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
               isActive ? "nav-link active" : "nav-link"
             }
-            title="Application"
+            title="Applications"
           >
             <span className="nav-icon">
                 <FileUser size={18} />
               </span>
 
-              <span className="nav-text">Application</span>
+              <span className="nav-text">Applications</span>
             </NavLink>
 
             <NavLink
-            to="/admin/students"
+            to={`${basePath}/students`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -142,7 +146,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/partnercompanies"
+            to={`${basePath}/partnercompanies`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -158,7 +162,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/ojtcoordinators"
+            to={`${basePath}/ojtcoordinators`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -174,7 +178,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/attendance"
+            to={`${basePath}/attendance`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -190,7 +194,7 @@ function AdminLayout() {
             </NavLink>
 
                         <NavLink
-            to="/admin/ojthours"
+            to={`${basePath}/ojthours`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -206,7 +210,7 @@ function AdminLayout() {
             </NavLink>
 
                         <NavLink
-            to="/admin/Evaluation"
+            to={`${basePath}/evaluation`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -222,7 +226,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/Ojtreports"
+            to={`${basePath}/ojtreports`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -238,7 +242,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/Attendancereports"
+            to={`${basePath}/attendancereports`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -254,7 +258,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/Users"
+            to={`${basePath}/users`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -270,7 +274,7 @@ function AdminLayout() {
             </NavLink>
 
                         <NavLink
-            to="/admin/Settings"
+            to={`${basePath}/settings`}
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -284,6 +288,11 @@ function AdminLayout() {
 
               <span className="nav-text">Settings</span>
             </NavLink>
+
+            <button type="button" className="nav-link sidebar-logout" onClick={handleLogout} title="Logout">
+              <span className="nav-icon"><LogOut size={18} /></span>
+              <span className="nav-text">Logout</span>
+            </button>
 
 
 

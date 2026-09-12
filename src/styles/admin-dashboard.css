@@ -120,7 +120,7 @@
 .panel-kicker { margin-bottom: 6px; }
 
 .progress-layout { display: flex; align-items: center; gap: 34px; margin: 28px 0 25px; }
-.progress-ring { display: grid; place-items: center; width: 142px; height: 142px; flex: 0 0 142px; border-radius: 50%; background: conic-gradient(#3576d3 0 73%, #e9edf3 73% 100%); }
+.progress-ring { position: relative; display: grid; place-items: center; width: 142px; height: 142px; flex: 0 0 142px; border-radius: 50%; background: conic-gradient(#3576d3 0 73%, #e9edf3 73% 100%); }
 .progress-ring::before { position: absolute; width: 110px; height: 110px; border-radius: 50%; background: #fff; content: ""; }
 .progress-ring > div { position: relative; z-index: 1; text-align: center; }
 .progress-ring strong { display: block; color: #1c2c46; font-size: 27px; letter-spacing: -0.05em; }
@@ -153,6 +153,30 @@
 .activity-copy span,
 .activity-item time { color: #8a96a8; font-size: 11px; }
 .activity-item time { flex: 0 0 auto; }
+
+.admin-placeholder {
+  display: grid;
+  place-items: start;
+  min-height: 360px;
+  padding: 32px;
+  border: 1px solid var(--dashboard-line);
+  background: var(--dashboard-surface);
+  box-shadow: 0 8px 24px rgba(24, 38, 63, 0.04);
+}
+
+.placeholder-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: #e7f0ff;
+  color: #3576d3;
+}
+
+.admin-placeholder h1 { margin: 0 0 8px; color: #172033; font-size: 30px; }
+.admin-placeholder > p:last-child { color: var(--dashboard-muted); }
 
 @keyframes dashboard-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
