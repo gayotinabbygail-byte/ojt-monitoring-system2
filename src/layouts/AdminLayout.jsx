@@ -206,7 +206,7 @@ function AdminLayout() {
             </NavLink>
 
                         <NavLink
-            to="/admin/evaluation"
+            to="/admin/Evaluation"
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -222,7 +222,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/ojtreports"
+            to="/admin/Ojtreports"
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -238,7 +238,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/attendancereports"
+            to="/admin/Attendancereports"
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -254,7 +254,7 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
-            to="/admin/users"
+            to="/admin/Users"
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
@@ -270,7 +270,7 @@ function AdminLayout() {
             </NavLink>
 
                         <NavLink
-            to="/admin/settings"
+            to="/admin/Settings"
             end
             onClick={closeSidebarOnMobile}
             className={({ isActive }) =>
