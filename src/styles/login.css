@@ -23,6 +23,10 @@
     border: 1px solid rgba(255,255,255,0.28);
     border-radius: 11px;
     color: #a9d1ff;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
 }
 
 .login-overline,

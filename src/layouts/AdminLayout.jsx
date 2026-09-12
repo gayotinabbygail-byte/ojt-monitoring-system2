@@ -21,9 +21,6 @@ import {
   LogOut,
 } from "lucide-react";
 
-// Importing the logo image
-import hero from "../assets/hero.png";
-
 function AdminLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -75,7 +72,7 @@ function AdminLayout() {
 
           {/* Application Title */}
           <div className="admin-title">
-            <img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
+            <span className="admin-logo" aria-label="LCCI">LCCI</span>
             <h2>OJT Monitoring System LCCI</h2>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import { getUserData } from "../services/userService";
-import { ArrowRight, BriefcaseBusiness, UserPlus } from "lucide-react";
+import { ArrowRight, UserPlus } from "lucide-react";
 import { createUserProfile } from "../services/userService";
 
 function Login() {
@@ -117,7 +117,7 @@ const redirectUser = async () => {
   return (
     <div className="login-container">
       <div className="login-story">
-        <div className="login-mark"><BriefcaseBusiness size={21} /></div>
+        <div className="login-mark" aria-label="LCCI">LCCI</div>
         <p className="login-overline">LCCI · OJT MONITORING</p>
         <h1>Make every placement count.</h1>
         <p className="login-story-copy">A clearer view of students, partners, attendance, and progress, all in one place.</p>
