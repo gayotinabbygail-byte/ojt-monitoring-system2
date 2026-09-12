@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../services/firebase";
-import { getUserData } from "../services/userService";
 import { AuthContext } from "./AuthContextDefinition";
 
 export function AuthProvider({ children }) {
@@ -9,29 +6,52 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            try {
-                if (!currentUser) {
-                    setUser(null);
-                    return;
-                }
+        let active = true;
+        let unsubscribe;
 
-                const userData = await getUserData(currentUser.uid);
+        const initializeAuth = async () => {
+            const [{ onAuthStateChanged }, { auth }, { getUserData }] = await Promise.all([
+                import("firebase/auth"),
+                import("../services/firebase"),
+                import("../services/userService"),
+            ]);
 
-                setUser({
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    ...(userData || {})
-                });
-            } catch (error) {
-                console.error("Unable to load the authenticated user profile:", error);
-                setUser(null);
-            } finally {
-                setLoading(false);
+            if (!active) {
+                return;
             }
+
+            unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+                try {
+                    if (!currentUser) {
+                        setUser(null);
+                        return;
+                    }
+
+                    const userData = await getUserData(currentUser.uid);
+
+                    setUser({
+                        uid: currentUser.uid,
+                        email: currentUser.email,
+                        ...(userData || {})
+                    });
+                } catch (error) {
+                    console.error("Unable to load the authenticated user profile:", error);
+                    setUser(null);
+                } finally {
+                    setLoading(false);
+                }
+            });
+        };
+
+        initializeAuth().catch((error) => {
+            console.error("Unable to initialize authentication:", error);
+            setLoading(false);
         });
 
-        return unsubscribe;
+        return () => {
+            active = false;
+            unsubscribe?.();
+        };
     }, []);
 
 

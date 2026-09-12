@@ -1,26 +1,29 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "../pages/login";
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import StudentDashboard from "../pages/StudentDashboard";
 import RoleRoute from "../services/RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
-import Application from "../pages/admin/Application";
-import Students from "../pages/admin/Students";
-import Positions from "../pages/Positions";
-import Attendance from "../pages/admin/Attendance";
-import OjtHours from "../pages/admin/OjtHours";
-import Evaluation from "../pages/admin/Evaluation";
-import OjtReports from "../pages/admin/OjtReports";
-import AttendanceReports from "../pages/admin/AttendanceReport";
-import Users from "../pages/admin/Users";
-import Settings from "../pages/admin/Setting";
-import OjtCoordinators from "../pages/admin/OjtCoordinators";
-import CoordinatorsDashboard from "../pages/CoordinatorDasboard";
+
+const Login = lazy(() => import("../pages/login"));
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const StudentDashboard = lazy(() => import("../pages/StudentDashboard"));
+const Application = lazy(() => import("../pages/admin/Application"));
+const Students = lazy(() => import("../pages/admin/Students"));
+const Positions = lazy(() => import("../pages/Positions"));
+const Attendance = lazy(() => import("../pages/admin/Attendance"));
+const OjtHours = lazy(() => import("../pages/admin/OjtHours"));
+const Evaluation = lazy(() => import("../pages/admin/Evaluation"));
+const OjtReports = lazy(() => import("../pages/admin/OjtReports"));
+const AttendanceReports = lazy(() => import("../pages/admin/AttendanceReport"));
+const Users = lazy(() => import("../pages/admin/Users"));
+const Settings = lazy(() => import("../pages/admin/Setting"));
+const OjtCoordinators = lazy(() => import("../pages/admin/OjtCoordinators"));
+const CoordinatorsDashboard = lazy(() => import("../pages/CoordinatorDasboard"));
 
 function AppRoutes() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={<p>Loading...</p>}>
+        <Routes>
         <Route path="/" element={<Login />} />
         <Route
           path="/admin"
@@ -60,7 +63,8 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
