@@ -4,7 +4,6 @@ import Dashboard from "../pages/Dashboard";
 import StudentDashboard from "../pages/StudentDashboard";
 import RoleRoute from "../services/RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
-import Candidates from "../pages/Candidates";
 import Positions from "../pages/Positions";
 import AdminPlaceholder from "../pages/AdminPlaceholder";
 import Application from "../pages/Application";
@@ -40,16 +39,16 @@ function AppRoutes() {
         >
             <Route index element={<Dashboard />} />
             <Route path="application" element={<Application />} />
-            <Route path="students" element={<Candidates />} />
+            <Route path="students" element={<Students />} />
             <Route path="partnercompanies" element={<Positions />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="ojtreports" element={<OJTReports />} />
             <Route path="attendancereports" element={<AttendanceReports />} />
             <Route path="users" element={<Users />} />
             <Route path="settings" element={<Settings />} />
-            {placeholderRoutes.map(([path, title]) => (
-              <Route key={path} path={path} element={<AdminPlaceholder title={title} />} />
-            ))}
+            <Route path="ojtcoordinators" element={<OJTCoordinators />} />
+            <Route path="ojthours" element={<OJTHours />} />
+            <Route path="evaluation" element={<Evaluation />} />
         </Route>
 
         <Route
