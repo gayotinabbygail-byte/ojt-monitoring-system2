@@ -14,15 +14,15 @@ import OJTCoordinators from "../pages/OJTCoordinators";
 import OJTHours from "../pages/OJTHours";
 import Evaluation from "../pages/Evaluation";
 import Attendance from "../pages/admin/Attendance";
+import OJTReports from "../pages/OJTReports";
+import AttendanceReports from "../pages/AttendanceReports";
+import Users from "../pages/Users";
+import Settings from "../pages/Settings";
 
 const placeholderRoutes = [
   ["ojtcoordinators", "OJT Coordinators"],
   ["ojthours", "OJT Hours"],
   ["evaluation", "Evaluations"],
-  ["ojtreports", "OJT Reports"],
-  ["attendancereports", "Attendance Reports"],
-  ["users", "Users"],
-  ["settings", "Settings"],
 ];
 
 function AppRoutes() {
@@ -43,6 +43,10 @@ function AppRoutes() {
             <Route path="students" element={<Candidates />} />
             <Route path="partnercompanies" element={<Positions />} />
             <Route path="attendance" element={<Attendance />} />
+            <Route path="ojtreports" element={<OJTReports />} />
+            <Route path="attendancereports" element={<AttendanceReports />} />
+            <Route path="users" element={<Users />} />
+            <Route path="settings" element={<Settings />} />
             {placeholderRoutes.map(([path, title]) => (
               <Route key={path} path={path} element={<AdminPlaceholder title={title} />} />
             ))}
@@ -61,9 +65,12 @@ function AppRoutes() {
           <Route path="students" element={<Students />} />
           <Route path="partnercompanies" element={<PartnerCompanies />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="ojtreports" element={<OJTReports />} />
+          <Route path="attendancereports" element={<AttendanceReports />} />
           <Route path="ojtcoordinators" element={<OJTCoordinators />} />
           <Route path="ojthours" element={<OJTHours />} />
           <Route path="evaluation" element={<Evaluation />} />
+          <Route path="settings" element={<Settings />} />
           {placeholderRoutes.filter(([path]) => !["ojtcoordinators", "ojthours", "evaluation"].includes(path)).map(([path, title]) => (
             <Route key={path} path={path} element={<AdminPlaceholder title={title} />} />
           ))}

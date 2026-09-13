@@ -1,106 +1,181 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
-  Clock3,
   Download,
+  Eye,
   FileBarChart,
-  FileText,
-  ListChecks,
-  MoreHorizontal,
   Printer,
   Search,
+  Users,
+  X,
   XCircle,
 } from "lucide-react";
-import { useAttendance } from "../context/useAttendance";
-import "../styles/attendance-reports.css";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../services/firebase";
+import "../styles/attendance-reports-management.css";
 
-const recentReports = [
-  { name: "September Attendance Summary", period: "Sep 01 - Sep 12, 2026", company: "All companies", date: "Sep 12, 2026", by: "Admin User", status: "Completed" },
-  { name: "Isabela Tech Weekly Report", period: "Sep 05 - Sep 11, 2026", company: "Isabela Tech Solutions", date: "Sep 11, 2026", by: "Patricia Lim", status: "Completed" },
-  { name: "Monthly Coordinator Review", period: "August 2026", company: "All companies", date: "Sep 01, 2026", by: "Admin User", status: "Processing" },
-  { name: "Provincial Capitol Attendance", period: "Aug 18 - Aug 30, 2026", company: "Provincial Capitol", date: "Aug 30, 2026", by: "Ramon Villanueva", status: "Pending" },
-  { name: "July Attendance Archive", period: "July 2026", company: "All companies", date: "Aug 01, 2026", by: "Admin User", status: "Failed" },
-];
+const statuses = ["Present", "Late", "Absent", "Excused"];
+const today = () => new Date().toISOString().slice(0, 10);
 
-const reportStatusClass = { Completed: "completed", Pending: "pending", Processing: "processing", Failed: "failed" };
-const attendanceStatusClass = { Present: "present", Absent: "absent", Late: "late", Excused: "excused", Incomplete: "excused" };
-
-const trendData = [
-  { label: "Mon", present: 82, absent: 10, late: 8 },
-  { label: "Tue", present: 88, absent: 6, late: 6 },
-  { label: "Wed", present: 76, absent: 14, late: 10 },
-  { label: "Thu", present: 91, absent: 4, late: 5 },
-  { label: "Fri", present: 84, absent: 9, late: 7 },
-  { label: "Sat", present: 68, absent: 19, late: 13 },
-];
-
-function AttendanceReports() {
-  const { records } = useAttendance();
-  const [search, setSearch] = useState("");
-  const [dateRange, setDateRange] = useState("September 1 - 12, 2026");
-  const [company, setCompany] = useState("All companies");
-  const [course, setCourse] = useState("All courses");
-  const [status, setStatus] = useState("All statuses");
-  const [month, setMonth] = useState("September 2026");
-  const [reportPage, setReportPage] = useState(1);
-  const [historyPage, setHistoryPage] = useState(1);
-  const [notice, setNotice] = useState("");
-  const pageSize = 4;
-
-  const companies = [...new Set(records.map((record) => record.company))];
-  const courses = ["BS Information Technology", "BS Business Administration", "BS Accountancy", "BS Hospitality Management"];
-  const reportRows = records.map((record) => ({
-    ...record,
-    course: courses[records.indexOf(record) % courses.length],
-    status: record.status === "Incomplete" ? "Excused" : record.status,
-  }));
-
-  const filteredRows = useMemo(() => reportRows.filter((record) => {
-    const query = search.toLowerCase().trim();
-    return (!query || `${record.student} ${record.studentId}`.toLowerCase().includes(query))
-      && (company === "All companies" || record.company === company)
-      && (course === "All courses" || record.course === course)
-      && (status === "All statuses" || record.status === status);
-  }), [company, course, reportRows, search, status]);
-
-  const visibleRows = filteredRows.slice((reportPage - 1) * pageSize, reportPage * pageSize);
-  const reportPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const visibleHistory = recentReports.slice((historyPage - 1) * pageSize, historyPage * pageSize);
-  const historyPages = Math.max(1, Math.ceil(recentReports.length / pageSize));
-  const summary = records.reduce((result, record) => {
-    const normalized = record.status === "Incomplete" ? "Excused" : record.status;
-    result[normalized] = (result[normalized] || 0) + 1;
-    return result;
-  }, { Present: 0, Absent: 0, Late: 0, Excused: 0 });
-  const attendancePercentage = records.length ? Math.round((summary.Present / records.length) * 100) : 0;
-
-  const showNotice = (message) => { setNotice(message); window.setTimeout(() => setNotice(""), 2400); };
-  const resetReportPage = (setter, value) => { setter(value); setReportPage(1); };
-
-  return (
-    <main className="attendance-reports-page">
-      <header className="attendance-reports-header">
-        <div><p className="attendance-reports-eyebrow">OJT monitoring · reporting center</p><h1>Attendance Reports</h1><p>View, analyze, generate, and manage OJT student attendance reports.</p></div>
-        <div className="attendance-report-actions"><button type="button" className="report-secondary-button" onClick={() => showNotice("Report export is ready to connect.")}><Download size={15} /> Export Report</button><button type="button" className="report-primary-button" onClick={() => showNotice("Attendance report generated successfully.")}><FileBarChart size={16} /> Generate Attendance Report</button></div>
-      </header>
-
-      <section className="attendance-report-summary" aria-label="Attendance report summary"><article><span className="report-summary-icon blue"><CalendarDays size={19} /></span><div><span>Total Attendance Records</span><strong>{records.length}</strong><small>Across current dataset</small></div></article><article><span className="report-summary-icon green"><CheckCircle2 size={19} /></span><div><span>Present Students</span><strong>{summary.Present}</strong><small>{attendancePercentage}% attendance rate</small></div></article><article><span className="report-summary-icon red"><XCircle size={19} /></span><div><span>Absent Students</span><strong>{summary.Absent}</strong><small>Requires follow-up</small></div></article><article><span className="report-summary-icon amber"><Clock3 size={19} /></span><div><span>Late Students</span><strong>{summary.Late}</strong><small>Review punctuality trends</small></div></article></section>
-
-      <section className="attendance-report-panel report-filters-panel"><div className="report-section-heading"><div><p className="report-kicker">Report builder</p><h2>Attendance Report Filters</h2></div><span className="filter-context"><CalendarDays size={14} /> {month}</span></div><div className="report-filters-grid"><label className="report-search-field"><span>Search student</span><div><Search size={15} /><input value={search} onChange={(event) => resetReportPage(setSearch, event.target.value)} placeholder="Name or Student ID" /></div></label><label><span>Date range</span><select value={dateRange} onChange={(event) => setDateRange(event.target.value)}><option>September 1 - 12, 2026</option><option>August 1 - 31, 2026</option><option>July 1 - 31, 2026</option></select></label><label><span>Partner company</span><select value={company} onChange={(event) => resetReportPage(setCompany, event.target.value)}><option>All companies</option>{companies.map((item) => <option key={item}>{item}</option>)}</select></label><label><span>Course or program</span><select value={course} onChange={(event) => resetReportPage(setCourse, event.target.value)}><option>All courses</option>{courses.map((item) => <option key={item}>{item}</option>)}</select></label><label><span>Attendance status</span><select value={status} onChange={(event) => resetReportPage(setStatus, event.target.value)}><option>All statuses</option><option>Present</option><option>Absent</option><option>Late</option><option>Excused</option></select></label><label><span>Month</span><select value={month} onChange={(event) => setMonth(event.target.value)}><option>September 2026</option><option>August 2026</option><option>July 2026</option></select></label></div><div className="filter-actions"><button type="button" className="report-primary-button" onClick={() => showNotice(`Report generated for ${month}.`)}><FileBarChart size={16} /> Generate Attendance Report</button><button type="button" className="report-secondary-button" onClick={() => showNotice("PDF download is ready to connect.")}><Download size={15} /> Download PDF</button><button type="button" className="report-secondary-button" onClick={() => showNotice("Print dialog is ready to connect.")}><Printer size={15} /> Print Report</button></div></section>
-
-      <section className="attendance-report-panel overview-panel"><div className="report-section-heading"><div><p className="report-kicker">Current snapshot</p><h2>Attendance Overview</h2></div><span className="overview-period">Daily trend · {month}</span></div><div className="overview-stats"><div><span className="overview-stat-label"><CheckCircle2 size={14} /> Total Present</span><strong>{summary.Present}</strong><small className="positive">+8.4% from last period</small></div><div><span className="overview-stat-label"><XCircle size={14} /> Total Absent</span><strong>{summary.Absent}</strong><small>Needs coordinator review</small></div><div><span className="overview-stat-label"><Clock3 size={14} /> Total Late</span><strong>{summary.Late}</strong><small>Monitor punctuality</small></div><div><span className="overview-stat-label"><ListChecks size={14} /> Attendance Percentage</span><strong>{attendancePercentage}%</strong><small className="positive">Within target range</small></div></div><div className="attendance-chart" aria-label="Daily attendance trend chart"><div className="chart-axis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div className="chart-grid">{trendData.map((day) => <div className="chart-column" key={day.label}><div className="chart-bars"><i className="chart-present" style={{ height: `${day.present}%` }} title={`${day.present}% present`} /><i className="chart-late" style={{ height: `${day.late}%` }} title={`${day.late}% late`} /><i className="chart-absent" style={{ height: `${day.absent}%` }} title={`${day.absent}% absent`} /></div><span>{day.label}</span></div>)}</div></div><div className="chart-legend"><span><i className="chart-present" /> Present</span><span><i className="chart-late" /> Late</span><span><i className="chart-absent" /> Absent</span></div></section>
-
-      <section className="attendance-report-panel report-table-panel"><div className="report-section-heading"><div><p className="report-kicker">Filtered records</p><h2>Detailed Attendance Report</h2></div><span className="table-count">{filteredRows.length} records</span></div><div className="report-table-wrap"><table className="report-table"><thead><tr><th>Student Name</th><th>Student ID</th><th>Course</th><th>Partner Company</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Total Hours</th><th>Status</th><th>Action</th></tr></thead><tbody>{visibleRows.map((record) => <tr key={record.id}><td><strong>{record.student}</strong></td><td>{record.studentId}</td><td>{record.course}</td><td>{record.company}</td><td>{record.date}</td><td>{record.timeIn}</td><td>{record.timeOut}</td><td>{record.hours} hrs</td><td><span className={`report-status-badge ${attendanceStatusClass[record.status]}`}>{record.status}</span></td><td><button type="button" className="table-action-button" title="Attendance actions" aria-label={`Actions for ${record.student}`} onClick={() => showNotice(`Actions for ${record.student} are ready to connect.`)}><MoreHorizontal size={16} /></button></td></tr>)}</tbody></table>{visibleRows.length === 0 && <div className="report-empty">No attendance records match the selected filters.</div>}</div><ReportPagination page={reportPage} totalPages={reportPages} onPrevious={() => setReportPage((current) => current - 1)} onNext={() => setReportPage((current) => current + 1)} label={`Showing ${visibleRows.length} of ${filteredRows.length} records`} /></section>
-
-      <section className="attendance-report-panel report-table-panel"><div className="report-section-heading"><div><p className="report-kicker">Report history</p><h2>Recent Attendance Reports</h2></div><button type="button" className="report-secondary-button compact" onClick={() => showNotice("Report archive is ready to connect.")}><FileText size={14} /> View archive</button></div><div className="report-table-wrap"><table className="report-table recent-report-table"><thead><tr><th>Report Name</th><th>Report Period</th><th>Partner Company</th><th>Generated Date</th><th>Generated By</th><th>Status</th><th>Action</th></tr></thead><tbody>{visibleHistory.map((report) => <tr key={report.name}><td><strong>{report.name}</strong></td><td>{report.period}</td><td>{report.company}</td><td>{report.date}</td><td>{report.by}</td><td><span className={`report-status-badge ${reportStatusClass[report.status]}`}>{report.status}</span></td><td><button type="button" className="table-action-button" title="Report actions" aria-label={`Actions for ${report.name}`} onClick={() => showNotice(`${report.name} actions are ready to connect.`)}><MoreHorizontal size={16} /></button></td></tr>)}</tbody></table></div><ReportPagination page={historyPage} totalPages={historyPages} onPrevious={() => setHistoryPage((current) => current - 1)} onNext={() => setHistoryPage((current) => current + 1)} label={`Showing ${visibleHistory.length} of ${recentReports.length} reports`} /></section>
-      {notice && <div className="attendance-reports-notice">{notice}</div>}
-    </main>
-  );
+function field(record, keys, fallback = "") {
+  return keys.map((key) => record[key]).find((value) => value !== undefined && value !== null && value !== "") ?? fallback;
 }
 
-function ReportPagination({ page, totalPages, onPrevious, onNext, label }) {
-  return <footer className="report-pagination"><span>{label}</span><div><button type="button" aria-label="Previous page" disabled={page === 1} onClick={onPrevious}>Previous</button><strong>Page {page} of {totalPages}</strong><button type="button" aria-label="Next page" disabled={page === totalPages} onClick={onNext}>Next</button></div></footer>;
+function normalizeStatus(status) {
+  return status === "Incomplete" ? "Excused" : status || "Excused";
+}
+
+function normalizeRecord(record, students) {
+  const studentId = field(record, ["studentId", "studentID"], "");
+  const student = students.find((item) => (field(item, ["studentId", "studentID", "idNumber", "id"], "") === studentId));
+  return {
+    ...record,
+    date: field(record, ["date"], ""),
+    studentId,
+    studentName: field(record, ["studentName", "student"], field(student, ["name", "fullName", "studentName"], "Unnamed student")),
+    course: field(record, ["course", "program", "courseProgram"], field(student, ["course", "program", "courseProgram"], "Not specified")),
+    company: field(record, ["company", "partnerCompany"], field(student, ["company", "partnerCompany", "companyName"], "Not assigned")),
+    timeIn: field(record, ["timeIn"], ""),
+    timeOut: field(record, ["timeOut"], ""),
+    totalHours: Number(field(record, ["totalHours", "hours"], 0)),
+    status: normalizeStatus(record.status),
+    remarks: field(record, ["remarks", "note"], ""),
+  };
+}
+
+function inRange(date, range, start, end) {
+  if (!date || range === "All dates") return true;
+  if (range === "Custom") return (!start || date >= start) && (!end || date <= end);
+  const current = new Date(`${today()}T00:00:00`);
+  const target = new Date(`${date}T00:00:00`);
+  if (range === "Daily") return date === today();
+  if (range === "Weekly") {
+    const first = new Date(current);
+    first.setDate(current.getDate() - current.getDay());
+    const last = new Date(first);
+    last.setDate(first.getDate() + 6);
+    return target >= first && target <= last;
+  }
+  if (range === "Monthly") return target.getFullYear() === current.getFullYear() && target.getMonth() === current.getMonth();
+  return true;
+}
+
+function AttendanceReports() {
+  const [students, setStudents] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState("All dates");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [studentFilter, setStudentFilter] = useState("All students");
+  const [companyFilter, setCompanyFilter] = useState("All companies");
+  const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [selected, setSelected] = useState(null);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let studentsReady = false;
+    let attendanceReady = false;
+    const finish = () => { if (studentsReady && attendanceReady) setLoading(false); };
+    const unsubscribeStudents = onSnapshot(collection(db, "students"), (snapshot) => {
+      setStudents(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+      studentsReady = true;
+      finish();
+    }, (snapshotError) => {
+      console.error("Unable to load students for attendance reports:", snapshotError);
+      setError("Unable to load attendance reports.");
+      studentsReady = true;
+      finish();
+    });
+    const unsubscribeAttendance = onSnapshot(collection(db, "attendance"), (snapshot) => {
+      setRecords(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+      attendanceReady = true;
+      finish();
+    }, (snapshotError) => {
+      console.error("Unable to load attendance reports:", snapshotError);
+      setError("Unable to load attendance reports.");
+      attendanceReady = true;
+      finish();
+    });
+    return () => { unsubscribeStudents(); unsubscribeAttendance(); };
+  }, []);
+
+  const rows = useMemo(() => records.map((record) => normalizeRecord(record, students)), [records, students]);
+  const studentsList = useMemo(() => ["All students", ...new Set(rows.map((row) => row.studentName))], [rows]);
+  const companies = useMemo(() => ["All companies", ...new Set(rows.map((row) => row.company))], [rows]);
+  const filteredRows = useMemo(() => rows.filter((row) => {
+    const query = search.trim().toLowerCase();
+    return (!query || `${row.studentName} ${row.studentId}`.toLowerCase().includes(query))
+      && inRange(row.date, dateRange, startDate, endDate)
+      && (studentFilter === "All students" || row.studentName === studentFilter)
+      && (companyFilter === "All companies" || row.company === companyFilter)
+      && (statusFilter === "All statuses" || row.status === statusFilter);
+  }), [companyFilter, dateRange, endDate, rows, search, startDate, statusFilter, studentFilter]);
+
+  const summary = useMemo(() => ({
+    students: new Set(rows.map((row) => row.studentId || row.studentName)).size,
+    present: rows.filter((row) => row.status === "Present").length,
+    absent: rows.filter((row) => row.status === "Absent").length,
+    late: rows.filter((row) => row.status === "Late").length,
+    total: rows.length,
+  }), [rows]);
+
+  const showNotice = (message) => { setNotice(message); window.setTimeout(() => setNotice(""), 3000); };
+  const clearFilters = () => {
+    setSearch("");
+    setDateRange("All dates");
+    setStartDate("");
+    setEndDate("");
+    setStudentFilter("All students");
+    setCompanyFilter("All companies");
+    setStatusFilter("All statuses");
+  };
+  const studentDetails = (row) => {
+    const studentRows = rows.filter((item) => item.studentId === row.studentId || item.studentName === row.studentName);
+    const present = studentRows.filter((item) => item.status === "Present").length;
+    return { ...row, studentRows, present, absent: studentRows.filter((item) => item.status === "Absent").length, late: studentRows.filter((item) => item.status === "Late").length, totalHours: studentRows.reduce((sum, item) => sum + item.totalHours, 0), percentage: studentRows.length ? Math.round((present / studentRows.length) * 100) : 0 };
+  };
+  const printReport = (targetRows = filteredRows, student = null) => {
+    if (!targetRows.length) { showNotice("There are no attendance records to report."); return; }
+    const summaryRows = {
+      present: targetRows.filter((row) => row.status === "Present").length,
+      late: targetRows.filter((row) => row.status === "Late").length,
+      absent: targetRows.filter((row) => row.status === "Absent").length,
+      hours: targetRows.reduce((sum, row) => sum + row.totalHours, 0),
+    };
+    const percentage = targetRows.length ? Math.round((summaryRows.present / targetRows.length) * 100) : 0;
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) { setError("Allow pop-ups to print the attendance report."); return; }
+    const title = student ? `${student.studentName} Attendance Report` : "Attendance Report";
+    const rowsMarkup = targetRows.map((row) => `<tr><td>${row.date || "—"}</td><td>${row.studentName}</td><td>${row.studentId || "—"}</td><td>${row.timeIn || "—"}</td><td>${row.timeOut || "—"}</td><td>${row.totalHours}</td><td>${row.status}</td><td>${row.remarks || "—"}</td></tr>`).join("");
+    printWindow.document.write(`<html><head><title>${title}</title><style>body{font-family:Arial,sans-serif;color:#172033;padding:30px}h1{color:#2868c7}table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:7px;border:1px solid #dbe3ed;text-align:left}th{background:#f3f8ff}.summary{margin:20px 0;display:flex;gap:20px}button{padding:10px 16px;background:#2868c7;color:#fff;border:0;border-radius:5px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">${student ? "Print / Save PDF" : "Print / Save PDF"}</button><h1>La Consolacion College Isabela</h1><h2>OJT Monitoring System</h2><h2>Attendance Report</h2><p><strong>Student:</strong> ${student?.studentName || "All students"}</p><div class="summary"><span>Present: ${summaryRows.present}</span><span>Late: ${summaryRows.late}</span><span>Absent: ${summaryRows.absent}</span><span>Total Hours: ${summaryRows.hours}</span><span>Attendance: ${percentage}%</span></div><table><thead><tr><th>Date</th><th>Student Name</th><th>Student ID</th><th>Time In</th><th>Time Out</th><th>Total Hours</th><th>Status</th><th>Remarks</th></tr></thead><tbody>${rowsMarkup}</tbody></table></body></html>`);
+    printWindow.document.close();
+  };
+  const exportCsv = () => {
+    if (!filteredRows.length) { showNotice("There are no attendance records to export."); return; }
+    const csvRows = [["Date", "Student Name", "Student ID", "Partner Company", "Time In", "Time Out", "Total Hours", "Status", "Remarks"], ...filteredRows.map((row) => [row.date, row.studentName, row.studentId, row.company, row.timeIn, row.timeOut, row.totalHours, row.status, row.remarks])];
+    const csv = csvRows.map((row) => row.map((value) => `"${String(value).replaceAll("\"", "\"\"")}"`).join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    link.download = "attendance-report.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showNotice("Attendance report exported.");
+  };
+
+  return (
+    <main className="attendance-reports-management">
+      <header className="attendance-reports-management-header"><div><p>OJT monitoring · reporting center</p><h1>Attendance Reports</h1><span>Analyze attendance records and generate coordinator-ready reports.</span></div><div className="attendance-reports-actions"><button type="button" className="attendance-reports-secondary" onClick={exportCsv}><Download size={15} /> Export Report</button><button type="button" className="attendance-reports-primary" onClick={() => printReport()}><FileBarChart size={16} /> Generate Attendance Report</button></div></header>
+      <section className="attendance-reports-summary"><article><Users size={19} /><div><small>Total Students</small><strong>{summary.students}</strong></div></article><article><CheckCircle2 size={19} /><div><small>Present</small><strong>{summary.present}</strong></div></article><article><XCircle size={19} /><div><small>Absent</small><strong>{summary.absent}</strong></div></article><article><CalendarDays size={19} /><div><small>Late</small><strong>{summary.late}</strong></div></article><article><FileBarChart size={19} /><div><small>Total Attendance Records</small><strong>{summary.total}</strong></div></article></section>
+      <section className="attendance-reports-panel"><div className="attendance-reports-section-heading"><div><p>Report builder</p><h2>Attendance Report Filters</h2></div><button type="button" className="attendance-reports-clear" onClick={clearFilters}>Clear Filters</button></div><div className="attendance-reports-filters"><label className="attendance-reports-search"><span>Search student</span><div><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or Student ID" /></div></label><label><span>Date range</span><select value={dateRange} onChange={(event) => setDateRange(event.target.value)}><option>All dates</option><option>Daily</option><option>Weekly</option><option>Monthly</option><option>Custom</option></select></label>{dateRange === "Custom" && <><label><span>From</span><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label><label><span>To</span><input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label></>}<label><span>Student</span><select value={studentFilter} onChange={(event) => setStudentFilter(event.target.value)}>{studentsList.map((item) => <option key={item}>{item}</option>)}</select></label><label><span>Partner company</span><select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value)}>{companies.map((item) => <option key={item}>{item}</option>)}</select></label><label><span>Attendance status</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>All statuses</option>{statuses.map((item) => <option key={item}>{item}</option>)}</select></label></div><div className="attendance-reports-filter-actions"><button type="button" className="attendance-reports-primary" onClick={() => printReport()}><Printer size={15} /> Print Report</button><button type="button" className="attendance-reports-secondary" onClick={exportCsv}><Download size={15} /> Download / Export</button></div></section>
+      <section className="attendance-reports-panel attendance-reports-table-panel"><div className="attendance-reports-section-heading"><div><p>Filtered records</p><h2>Attendance Report Table</h2></div><span>{filteredRows.length} records</span></div>{error && <div className="attendance-reports-error" role="alert">Unable to load attendance reports.</div>}{loading ? <div className="attendance-reports-empty">Loading attendance reports...</div> : filteredRows.length === 0 ? <div className="attendance-reports-empty">No attendance records found.</div> : <div className="attendance-reports-table-wrap"><table className="attendance-reports-table"><thead><tr><th>Date</th><th>Student Name</th><th>Student ID</th><th>Partner Company</th><th>Time In</th><th>Time Out</th><th>Total Hours</th><th>Status</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>{filteredRows.map((row) => <tr key={row.id}><td>{row.date || "—"}</td><td><strong>{row.studentName}</strong><small>{row.course}</small></td><td>{row.studentId || "—"}</td><td>{row.company}</td><td>{row.timeIn || "—"}</td><td>{row.timeOut || "—"}</td><td>{row.totalHours}</td><td><span className={`attendance-report-status ${row.status.toLowerCase()}`}>{row.status}</span></td><td>{row.remarks || "—"}</td><td><button type="button" className="attendance-reports-view" title="View details" onClick={() => setSelected(studentDetails(row))}><Eye size={15} /></button></td></tr>)}</tbody></table></div>}</section>
+      {selected && <div className="attendance-reports-backdrop" role="presentation" onClick={(event) => event.target === event.currentTarget && setSelected(null)}><section className="attendance-reports-modal" role="dialog" aria-modal="true"><header><div><p>Student attendance details</p><h2>{selected.studentName}</h2></div><button type="button" onClick={() => setSelected(null)} aria-label="Close"><X size={18} /></button></header><div className="attendance-reports-details"><div><small>Student ID</small><strong>{selected.studentId || "—"}</strong></div><div><small>Course / Program</small><strong>{selected.course}</strong></div><div><small>Partner Company</small><strong>{selected.company}</strong></div><div><small>Total Attendance Days</small><strong>{selected.studentRows.length}</strong></div><div><small>Present Days</small><strong>{selected.present}</strong></div><div><small>Late Days</small><strong>{selected.late}</strong></div><div><small>Absent Days</small><strong>{selected.absent}</strong></div><div><small>Total OJT Hours</small><strong>{selected.totalHours}</strong></div><div className="attendance-reports-percentage"><small>Attendance Percentage</small><strong>{selected.percentage}%</strong></div></div><footer><button type="button" className="attendance-reports-secondary" onClick={() => setSelected(null)}>Close</button><button type="button" className="attendance-reports-primary" onClick={() => printReport(selected.studentRows, selected)}><Printer size={15} /> Generate Report</button></footer></section></div>}
+      {notice && <div className="attendance-reports-notice" role="status">{notice}</div>}
+    </main>
+  );
 }
 
 export default AttendanceReports;

@@ -21,6 +21,9 @@ import {
   LogOut,
 } from "lucide-react";
 
+// Importing the logo image
+import hero from "../assets/hero.png";
+
 function AdminLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +75,7 @@ function AdminLayout() {
 
           {/* Application Title */}
           <div className="admin-title">
-            <span className="admin-logo" aria-label="LCCI">LCCI</span>
+            <img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
             <h2>OJT Monitoring System LCCI</h2>
           </div>
         </div>
@@ -254,21 +257,23 @@ function AdminLayout() {
               <span className="nav-text">Attendance Reports</span>
             </NavLink>
 
-            <NavLink
-            to={`${basePath}/users`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Users"
-          >
-            <span className="nav-icon">
-                <Users size={18} />
-              </span>
+            {user?.role === "admin" && (
+              <NavLink
+                to={`${basePath}/users`}
+                end
+                onClick={closeSidebarOnMobile}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+                title="Users"
+              >
+                <span className="nav-icon">
+                  <Users size={18} />
+                </span>
 
-              <span className="nav-text">Users</span>
-            </NavLink>
+                <span className="nav-text">Users</span>
+              </NavLink>
+            )}
 
                         <NavLink
             to={`${basePath}/settings`}
@@ -312,6 +317,5 @@ function AdminLayout() {
 }
 
 export default AdminLayout;
-
 
 
