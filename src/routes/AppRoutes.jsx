@@ -18,6 +18,7 @@ import AttendanceReports from "../pages/AttendanceReports";
 import Users from "../pages/Users";
 import Settings from "../pages/Settings";
 import CoordinatorDashboard from "../pages/CoordinatorDasboard";
+import CoordinatorReportsDashboard from "../pages/CoordinatorReportsDashboardPage";
 
 const placeholderRoutes = [
   ["ojtcoordinators", "OJT Coordinators"],
@@ -61,6 +62,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<CoordinatorDashboard />} />
+          <Route path="reports-dashboard" element={<CoordinatorReportsDashboard />} />
           <Route path="application" element={<Application />} />
           <Route path="students" element={<Students />} />
           <Route path="partnercompanies" element={<PartnerCompanies />} />

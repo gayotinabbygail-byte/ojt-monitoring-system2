@@ -114,6 +114,22 @@ function AdminLayout() {
             </NavLink>
 
           <NavLink
+            to={`${basePath}/reports-dashboard`}
+            end
+            onClick={closeSidebarOnMobile}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+            title="Reports Dashboard"
+          >
+            <span className="nav-icon">
+              <LayoutDashboard size={18} />
+            </span>
+
+            <span className="nav-text">Reports Dashboard</span>
+          </NavLink>
+
+          <NavLink
             to={`${basePath}/application`}
             end
             onClick={closeSidebarOnMobile}

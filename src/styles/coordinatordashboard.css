@@ -119,6 +119,38 @@
   margin-bottom: 16px;
 }
 
+.coordinator-report-list-panel {
+  margin-bottom: 16px;
+}
+
+.coordinator-report-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.coordinator-report-progress div {
+  padding: 14px;
+  border-radius: 7px;
+  background: #f7faff;
+}
+
+.coordinator-report-progress strong,
+.coordinator-report-progress span {
+  display: block;
+}
+
+.coordinator-report-progress strong {
+  color: #2868c7;
+  font-size: 28px;
+}
+
+.coordinator-report-progress span {
+  margin-top: 4px;
+  color: #718096;
+  font-size: 12px;
+}
+
 .coordinator-panel-heading {
   display: flex;
   align-items: center;
@@ -246,6 +278,10 @@
 
 @media (max-width: 480px) {
   .coordinator-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .coordinator-report-progress {
     grid-template-columns: 1fr;
   }
 
