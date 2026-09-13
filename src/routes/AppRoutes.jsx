@@ -17,6 +17,7 @@ import OJTReports from "../pages/OJTReports";
 import AttendanceReports from "../pages/AttendanceReports";
 import Users from "../pages/Users";
 import Settings from "../pages/Settings";
+import CoordinatorDashboard from "../pages/CoordinatorDasboard";
 
 const placeholderRoutes = [
   ["ojtcoordinators", "OJT Coordinators"],
@@ -59,7 +60,7 @@ function AppRoutes() {
             </RoleRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<CoordinatorDashboard />} />
           <Route path="application" element={<Application />} />
           <Route path="students" element={<Students />} />
           <Route path="partnercompanies" element={<PartnerCompanies />} />

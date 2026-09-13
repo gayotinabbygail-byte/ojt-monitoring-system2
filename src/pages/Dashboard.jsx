@@ -45,21 +45,21 @@ function Dashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState(Object.fromEntries(sources.map((source) => [source, []])));
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [failedSources, setFailedSources] = useState([]);
 
   useEffect(() => {
     const activeSources = user?.role === "admin" ? sources : sources.filter((source) => source !== "users");
     const ready = new Set();
     const unsubscribers = activeSources.map((source) => onSnapshot(collection(db, source), (snapshot) => {
       setData((current) => ({ ...current, [source]: snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) }));
+      setFailedSources((current) => current.filter((item) => item !== source));
       ready.add(source);
       if (ready.size === activeSources.length) setLoading(false);
-      setError("");
     }, (snapshotError) => {
       console.error(`Unable to load dashboard ${source}:`, snapshotError);
       ready.add(source);
-      setLoading(false);
-      setError("Unable to load dashboard data.");
+      setFailedSources((current) => current.includes(source) ? current : [...current, source]);
+      if (ready.size === activeSources.length) setLoading(false);
     }));
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [user?.role]);
@@ -111,7 +111,7 @@ function Dashboard() {
         <div><p className="dashboard-eyebrow">LCCI · OJT MONITORING SYSTEM</p><h1>{user?.role === "coordinator" ? "Coordinator Dashboard" : "Admin Dashboard"}</h1><p className="dashboard-subtitle">Welcome back, {user?.firstName || user?.email || "User"}! Here is your latest placement overview.</p></div>
         <button type="button" className="dashboard-date-button"><CalendarDays size={16} />{new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</button>
       </section>
-      {error && <div className="dashboard-error" role="alert">{error}</div>}
+      {failedSources.length > 0 && <div className="dashboard-error" role="alert">Unable to load: {failedSources.join(", ")}. Check the Firestore permissions for these collections.</div>}
       <section className="dashboard-stats" aria-label="OJT summary">{stats.map(([label, value, detail, Icon, tone]) => <button type="button" className="dashboard-stat" key={label} onClick={() => go(`${basePath}/${label === "Total Students" ? "students" : label.includes("Application") ? "application" : label.includes("Attendance") ? "attendancereports" : label.includes("Company") ? "partnercompanies" : label.includes("Coordinator") ? "ojtcoordinators" : label.includes("Hours") ? "ojthours" : "ojtreports"}`)}><div className={`stat-icon stat-icon-${tone}`}><Icon size={19} /></div><div className="stat-copy"><p>{label}</p><strong>{value}</strong><span>{detail}</span></div><ArrowUpRight className="stat-arrow" size={17} /></button>)}</section>
       <section className="dashboard-grid">
         <article className="dashboard-panel"><div className="panel-heading"><div><p className="panel-kicker">Student overview</p><h2>Placement health</h2></div><Activity size={20} /></div><div className="progress-layout"><div className="progress-ring" style={{ "--progress": `${students.length ? Math.round((students.filter((item) => item.status === "Completed").length / students.length) * 100) : 0}%` }}><div><strong>{students.length ? Math.round((students.filter((item) => item.status === "Completed").length / students.length) * 100) : 0}%</strong><span>completed</span></div></div><div className="progress-legend"><div><span className="legend-dot legend-blue" /><p>Currently on OJT <strong>{students.filter((item) => item.status === "Ongoing").length}</strong></p></div><div><span className="legend-dot legend-teal" /><p>Completed OJT <strong>{students.filter((item) => item.status === "Completed").length}</strong></p></div><div><span className="legend-dot legend-muted" /><p>Not yet assigned <strong>{students.filter((item) => !item.company || item.status === "Pending").length}</strong></p></div></div></div><p className="progress-footnote"><Clock3 size={14} /> {completedHours} total OJT hours recorded from attendance</p></article>
