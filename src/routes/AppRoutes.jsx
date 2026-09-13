@@ -15,6 +15,7 @@ import Evaluation from "../pages/Evaluation";
 import Attendance from "../pages/admin/Attendance";
 import OJTReports from "../pages/OJTReports";
 import AttendanceReports from "../pages/AttendanceReports";
+import AdminReportsDashboard from "../pages/AdminReportsDashboard";
 import Users from "../pages/Users";
 import Settings from "../pages/Settings";
 import CoordinatorDashboard from "../pages/CoordinatorDasboard";
@@ -40,6 +41,7 @@ function AppRoutes() {
           }
         >
             <Route index element={<Dashboard />} />
+            <Route path="reports-dashboard" element={<AdminReportsDashboard />} />
             <Route path="application" element={<Application />} />
             <Route path="students" element={<Students />} />
             <Route path="partnercompanies" element={<Positions />} />

@@ -252,6 +252,109 @@
   margin: 0;
 }
 
+.admin-reports-table-panel {
+  margin-bottom: 16px;
+}
+
+.admin-reports-muted {
+  margin: 6px 0 0;
+  color: #718096;
+  font-size: 12px;
+}
+
+.admin-reports-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+
+.admin-reports-search,
+.admin-reports-filters select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  box-sizing: border-box;
+  border: 1px solid #dbe3ed;
+  border-radius: 7px;
+  background: #fff;
+  color: #718096;
+  font: 13px "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.admin-reports-search {
+  width: min(430px, 100%);
+  padding: 0 11px;
+}
+
+.admin-reports-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #172033;
+  font: inherit;
+}
+
+.admin-reports-filters select {
+  padding: 0 10px;
+}
+
+.admin-reports-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-reports-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.admin-reports-table th {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e7ecf2;
+  color: #8995a7;
+  font-size: 10px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.admin-reports-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #edf1f6;
+  color: #536176;
+  vertical-align: top;
+}
+
+.admin-reports-table td strong,
+.admin-reports-table td small {
+  display: block;
+}
+
+.admin-reports-table td strong {
+  color: #172033;
+}
+
+.admin-reports-table td small {
+  margin-top: 3px;
+  color: #8995a7;
+  font-size: 11px;
+}
+
+.admin-reports-status {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #fff3d9;
+  color: #a46c12;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-reports-status.completed { background: #e2f6ef; color: #16866f; }
+.admin-reports-status.ongoing { background: #e8f0ff; color: #2868c7; }
+
 @keyframes coordinator-enter {
   from { opacity: 0; transform: translateY(7px); }
   to { opacity: 1; transform: translateY(0); }
