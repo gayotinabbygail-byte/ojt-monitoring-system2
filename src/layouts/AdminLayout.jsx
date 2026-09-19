@@ -177,21 +177,23 @@ function AdminLayout() {
               <span className="nav-text">Partner Companies</span>
             </NavLink>
 
-            <NavLink
-            to={`${basePath}/ojtcoordinators`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="OJT Coordinators"
-          >
-            <span className="nav-icon">
-                <FileAxis3d size={18} />
-              </span>
+            {user?.role === "admin" && (
+              <NavLink
+                to={`${basePath}/ojtcoordinators`}
+                end
+                onClick={closeSidebarOnMobile}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+                title="OJT Coordinators"
+              >
+                <span className="nav-icon">
+                  <FileAxis3d size={18} />
+                </span>
 
-              <span className="nav-text">OJT Coordinators</span>
-            </NavLink>
+                <span className="nav-text">OJT Coordinators</span>
+              </NavLink>
+            )}
 
             <NavLink
             to={`${basePath}/attendance`}

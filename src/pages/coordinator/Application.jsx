@@ -18,7 +18,6 @@ import {
   FileText,
   Filter,
   Pencil,
-  Plus,
   Search,
   X,
   XCircle,
@@ -26,6 +25,7 @@ import {
 import "../../styles/application.css";
 import { COURSES } from "../../constants/courses";
 import { db } from "../../services/firebase";
+import "../../styles/coordinator-module.css";
 
 const applications = [
   {
@@ -379,16 +379,6 @@ function Application() {
             Manage and review student OJT applications
           </p>
         </div>
-        <button
-          type="button"
-          className="application-primary"
-          onClick={() => {
-            setFormError("");
-            setShowNewApplication(true);
-          }}
-        >
-          <Plus size={17} /> New Application
-        </button>
       </header>
 
       <section className="application-summary" aria-label="Application summary">

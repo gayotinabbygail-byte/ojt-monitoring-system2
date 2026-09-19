@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { CheckCircle2, Edit3, Eye, Plus, Search, ShieldCheck, Trash2, UserRound, Users as UsersIcon, X } from "lucide-react";
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/useAuth";
 import { COURSES, isApprovedCourse } from "../../constants/courses";
+import { createManagedUser } from "../../services/userManagementSevice";
 import "../../styles/users-management.css";
 
 const roles = ["admin", "coordinator", "student"];
@@ -77,9 +78,20 @@ function Users() {
     try {
       const data = { firstName: form.firstName.trim(), lastName: form.lastName.trim(), email: form.email.trim(), role: form.role, status: form.status, studentId: form.studentId.trim(), course: form.course.trim(), company: form.company.trim(), updatedAt: new Date().toISOString() };
       if (modal === "add") {
-        const profileId = `${form.email.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
-        await setDoc(doc(db, "users", profileId), { ...data, createdAt: new Date().toISOString(), createdBy: user?.uid || null });
-        showNotice("User profile added successfully.");
+        const managedUser = await createManagedUser({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          role: data.role,
+          createdBy: user?.uid || null,
+        });
+        await updateDoc(doc(db, "users", managedUser.uid), {
+          studentId: data.studentId,
+          course: data.course,
+          company: data.company,
+          updatedAt: new Date().toISOString(),
+        });
+        alert(`User created. Temporary password: ${managedUser.temporaryPassword}`);
       } else {
         await updateDoc(doc(db, "users", modal.item.id), data);
         showNotice("User profile updated successfully.");

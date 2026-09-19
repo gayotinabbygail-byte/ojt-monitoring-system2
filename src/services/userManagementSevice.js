@@ -6,7 +6,7 @@ import {
 
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
-import { secondaryAuth } from "./secondaryAuth";
+import { secondaryAuth } from "./secondatyAuth";
 import { db } from "./firebase";
 
 // GENERATE TEMPORARY PASSWORD
@@ -47,7 +47,7 @@ export const createManagedUser = async ({
     throw new Error("Email is required.");
   }
 
-  if (!["staff", "customer"].includes(role)) {
+  if (!["admin", "coordinator", "student"].includes(role)) {
     throw new Error("Invalid user role.");
   }
  // GENERATE TEMPORARY PASSWORD

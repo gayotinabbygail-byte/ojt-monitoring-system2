@@ -5,7 +5,6 @@ import {
   Clock3,
   Edit3,
   Eye,
-  Plus,
   Search,
   Trash2,
   UserX,
@@ -23,6 +22,7 @@ import {
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/attendance-management.css";
+import "../../styles/coordinator-module.css";
 
 const statuses = ["Present", "Absent", "Late", "Incomplete"];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -152,7 +152,9 @@ function Attendance() {
       (snapshotError) => {
         console.error("Unable to load attendance records:", snapshotError);
         setError(
-          "Attendance records could not be loaded. Check your Firestore permissions and try again.",
+          snapshotError.code === "permission-denied"
+            ? "You do not have permission to view attendance records. Update your Firestore rules to allow coordinator access."
+            : `Attendance records could not be loaded (${snapshotError.code || "unknown error"}).`,
         );
         attendanceLoaded = true;
         finishLoading();
@@ -214,13 +216,6 @@ function Attendance() {
   const showNotice = (message) => {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 3000);
-  };
-
-  const openAdd = () => {
-    setForm({ ...emptyForm, date: dateFilter || today() });
-    setEditingRecord(null);
-    setFormError("");
-    setModal("form");
   };
 
   const openEdit = (record) => {
@@ -338,13 +333,6 @@ function Attendance() {
           <h1>Attendance</h1>
           <p>Monitor and manage student OJT attendance records.</p>
         </div>
-        <button
-          type="button"
-          className="attendance-primary-button"
-          onClick={openAdd}
-        >
-          <Plus size={17} /> Add Attendance
-        </button>
       </header>
 
       <section
