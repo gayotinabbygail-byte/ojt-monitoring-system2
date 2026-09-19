@@ -83,6 +83,10 @@ function ChangePassword() {
           navigate("/customer", {
             replace: true,
           });
+        } else if (user?.role === "supervisor") {
+          navigate("/supervisor", {
+            replace: true,
+          });
         } else {
           navigate("/", {
             replace: true,

@@ -134,6 +134,7 @@
 
 .input-group input {
     width: 100%;
+    box-sizing: border-box;
     padding: 13px 14px;
     border: 1px solid #d7dfeb;
     border-radius: 7px;
@@ -144,12 +145,60 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.password-group .password-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d7dfeb;
+    border-radius: 7px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.password-group .password-input-wrap:focus-within {
+    border-color: #5c91d8;
+    box-shadow: 0 0 0 3px rgba(40, 104, 199, 0.13);
+}
+
+.password-group .password-input-wrap input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 14px;
+    border: 0;
+    box-shadow: none;
+}
+
+.password-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-right: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #6a788c;
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    background: rgba(40, 104, 199, 0.06);
+    color: #2868c7;
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid rgba(40, 104, 199, 0.35);
+    outline-offset: 2px;
+}
+
 .input-group input:focus {
     border-color: #5c91d8;
     box-shadow: 0 0 0 3px rgba(40, 104, 199, 0.13);
 }
 
-.login-card button {
+.login-submit-button {
     width: 100%;
     display: flex;
     align-items: center;
@@ -167,7 +216,7 @@
     transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.login-card button:hover {
+.login-submit-button:hover {
     background: #1f59ae;
     transform: translateY(-1px);
 }

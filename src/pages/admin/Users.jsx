@@ -7,7 +7,7 @@ import { COURSES, isApprovedCourse } from "../../constants/courses";
 import { createManagedUser } from "../../services/userManagementSevice";
 import "../../styles/users-management.css";
 
-const roles = ["admin", "coordinator", "student"];
+const roles = ["admin", "coordinator", "supervisor", "student"];
 const statuses = ["ACTIVE", "INACTIVE"];
 const emptyForm = { firstName: "", lastName: "", email: "", role: "student", status: "ACTIVE", studentId: "", course: "", company: "" };
 

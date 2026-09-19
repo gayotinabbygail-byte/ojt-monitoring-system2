@@ -1,0 +1,178 @@
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+	BookOpenCheck,
+	ChartNoAxesCombined,
+	ChartCandlestick,
+	FileAxis3d,
+	FileUser,
+	Handshake,
+	LayoutDashboard,
+	ListChecks,
+	LogOut,
+	Menu,
+	Settings,
+	Summary,
+	Users,
+} from "lucide-react";
+import { logout } from "../services/authService";
+import { useAuth } from "../context/useAuth";
+import hero from "../assets/hero.png";
+import "../styles/AdminLayout.css";
+
+function SupervisorLayout() {
+	const { user } = useAuth();
+	const navigate = useNavigate();
+	const [sidebarOpen, setSidebarOpen] = useState(true);
+
+	const closeSidebarOnMobile = () => {
+		if (window.innerWidth <= 700) {
+			setSidebarOpen(false);
+		}
+	};
+
+	const handleLogout = async () => {
+		try {
+			await logout();
+			navigate("/");
+		} catch (error) {
+			alert(error.message);
+		}
+	};
+
+	const displayName = user?.firstName || user?.lastName
+		? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
+		: user?.email || "Supervisor";
+
+	return (
+		<div className={`admin-layout supervisor-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+			<header className="admin-header">
+				<div className="admin-header-left">
+					<button
+						type="button"
+						className="sidebar-toggle"
+						onClick={() => setSidebarOpen((isOpen) => !isOpen)}
+						aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+						title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+					>
+						<Menu size={22} />
+					</button>
+
+					<div className="admin-title">
+						<img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
+						<h2>Supervisor Portal</h2>
+					</div>
+				</div>
+
+				<div className="admin-user">
+					<span title={user?.email || "Supervisor"}>{displayName}</span>
+					<button type="button" className="logout-btn" onClick={handleLogout}>
+						Logout
+					</button>
+				</div>
+			</header>
+
+			<div className="admin-body">
+				<aside className="sidebar">
+					<SupervisorNavLink
+						to="/supervisor"
+						label="Dashboard"
+						icon={LayoutDashboard}
+						end
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/students"
+						label="Students"
+						icon={Users}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/applications"
+						label="Applications"
+						icon={FileUser}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/partnercompanies"
+						label="Partner Companies"
+						icon={Handshake}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/ojtcoordinators"
+						label="OJT Coordinators"
+						icon={FileAxis3d}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/attendance"
+						label="Attendance"
+						icon={ListChecks}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/ojthours"
+						label="OJT Hours"
+						icon={BookOpenCheck}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/evaluations"
+						label="Evaluations"
+						icon={ChartCandlestick}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/reports"
+						label="OJT Reports"
+						icon={Summary}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/attendancereports"
+						label="Attendance Reports"
+						icon={ChartNoAxesCombined}
+						onClick={closeSidebarOnMobile}
+					/>
+					<SupervisorNavLink
+						to="/supervisor/settings"
+						label="Settings"
+						icon={Settings}
+						onClick={closeSidebarOnMobile}
+					/>
+
+					<button type="button" className="nav-link sidebar-logout" onClick={handleLogout} title="Logout">
+						<span className="nav-icon"><LogOut size={18} /></span>
+						<span className="nav-text">Logout</span>
+					</button>
+				</aside>
+
+				{sidebarOpen && (
+					<div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+				)}
+
+				<main className="content">
+					<Outlet />
+				</main>
+			</div>
+		</div>
+	);
+}
+
+function SupervisorNavLink({ to, label, icon: Icon, end, onClick }) {
+	return (
+		<NavLink
+			to={to}
+			end={end}
+			onClick={onClick}
+			className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+			title={label}
+		>
+			<span className="nav-icon"><Icon size={18} /></span>
+			<span className="nav-text">{label}</span>
+		</NavLink>
+	);
+}
+
+export default SupervisorLayout;

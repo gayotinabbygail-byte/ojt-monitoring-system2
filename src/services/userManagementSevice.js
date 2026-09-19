@@ -47,7 +47,7 @@ export const createManagedUser = async ({
     throw new Error("Email is required.");
   }
 
-  if (!["admin", "coordinator", "student"].includes(role)) {
+  if (!["admin", "coordinator", "supervisor", "student"].includes(role)) {
     throw new Error("Invalid user role.");
   }
  // GENERATE TEMPORARY PASSWORD

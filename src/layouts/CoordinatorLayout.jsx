@@ -6,7 +6,7 @@ import { useAuth } from "../context/useAuth";
 import "../styles/AdminLayout.css";
 import hero from "../assets/hero.png";
 
-function StudentDashboard() {
+function CoordinatorDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -90,4 +90,4 @@ function StudentNavLink({ to, label, icon: Icon, end, onClick }) {
   );
 }
 
-export default StudentDashboard;
+export default CoordinatorLayout;
