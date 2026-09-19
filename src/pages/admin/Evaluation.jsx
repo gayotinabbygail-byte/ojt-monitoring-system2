@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { COURSES } from "../constants/courses";
+import { COURSES } from "../../constants/courses";
 
 const initialEvaluations = [
   { id: "EVAL-2026-042", student: "Maria Santos", studentId: "STU-2023-0184", course: "Bachelor of Science in Information Technology", company: "Isabela Tech Solutions", evaluator: "Marvin Dela Cruz", date: "Sep 10, 2026", rating: 4.8, status: "Completed", comment: "Maria consistently delivered quality work and communicated progress clearly." },

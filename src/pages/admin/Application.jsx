@@ -16,9 +16,9 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import "../styles/application.css";
-import { COURSES } from "../constants/courses";
-import { db } from "../services/firebase";
+import "../../styles/application.css";
+import { COURSES } from "../../constants/courses";
+import { db } from "../../services/firebase";
 
 const applications = [
   { id: "APP-2026-0042", name: "Maria Santos", studentId: "2023-IT-0184", course: "Bachelor of Science in Information Technology", company: "Isabela Tech Solutions", date: "Sep 11, 2026", status: "Pending", email: "maria.santos@lccian.edu.ph", phone: "0917 555 0184", documents: ["Resume.pdf", "Endorsement Letter.pdf"] },

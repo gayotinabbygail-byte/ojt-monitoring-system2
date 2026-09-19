@@ -15,9 +15,9 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { auth, db } from "../services/firebase";
-import { useAuth } from "../context/useAuth";
-import "../styles/settings.css";
+import { auth, db } from "../../services/firebase";
+import { useAuth } from "../../context/useAuth";
+import "../../styles/settings.css";
 
 const defaultNotifications = {
   application: true,

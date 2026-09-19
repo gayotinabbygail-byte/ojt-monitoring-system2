@@ -12,8 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../services/firebase";
-import "../styles/ojt-reports-management.css";
+import { db } from "../../services/firebase";
+import "../../styles/ojt-reports-management.css";
 
 const statuses = ["Ongoing", "Completed", "Pending"];
 

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { CheckCircle2, Edit3, Eye, Plus, Search, ShieldCheck, Trash2, UserRound, Users as UsersIcon, X } from "lucide-react";
-import { db } from "../services/firebase";
-import { useAuth } from "../context/useAuth";
-import { COURSES, isApprovedCourse } from "../constants/courses";
-import "../styles/users-management.css";
+import { db } from "../../services/firebase";
+import { useAuth } from "../../context/useAuth";
+import { COURSES, isApprovedCourse } from "../../constants/courses";
+import "../../styles/users-management.css";
 
 const roles = ["admin", "coordinator", "student"];
 const statuses = ["ACTIVE", "INACTIVE"];

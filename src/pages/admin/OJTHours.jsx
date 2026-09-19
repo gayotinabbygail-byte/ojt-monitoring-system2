@@ -13,7 +13,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { COURSES } from "../constants/courses";
+import { COURSES } from "../../constants/courses";
 
 const initialRecords = [
   { id: "STU-2023-0184", name: "Maria Santos", course: "Bachelor of Science in Information Technology", company: "Isabela Tech Solutions", required: 500, completed: 350, status: "Ongoing" },

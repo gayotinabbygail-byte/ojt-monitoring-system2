@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { db } from "../services/firebase";
-import "../styles/coordinatordashboard.css";
+import { db } from "../../services/firebase";
+import "../../styles/coordinatordashboard.css";
 
 const sources = ["students", "applications", "attendance", "partnerCompanies", "evaluations", "users"];
 const statuses = ["All statuses", "Ongoing", "Completed", "Pending"];

@@ -4,20 +4,19 @@ import Dashboard from "../pages/Dashboard";
 import StudentDashboard from "../pages/StudentDashboard";
 import RoleRoute from "../services/RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
-import Positions from "../pages/Positions";
-import AdminPlaceholder from "../pages/AdminPlaceholder";
-import Application from "../pages/Application";
-import Students from "../pages/Students";
-import PartnerCompanies from "../pages/PartnerCompanies";
-import OJTCoordinators from "../pages/OJTCoordinators";
-import OJTHours from "../pages/OJTHours";
-import Evaluation from "../pages/Evaluation";
+import AdminPlaceholder from "../pages/admin/AdminPlaceholder";
+import Application from "../pages/admin/Application";
+import Students from "../pages/admin/Students";
+import PartnerCompanies from "../pages/admin/PartnerCompanies";
+import OJTCoordinators from "../pages/admin/OJTCoordinators";
+import OJTHours from "../pages/admin/OJTHours";
+import Evaluation from "../pages/admin/Evaluation";
 import Attendance from "../pages/admin/Attendance";
-import OJTReports from "../pages/OJTReports";
-import AttendanceReports from "../pages/AttendanceReports";
-import AdminReportsDashboard from "../pages/AdminReportsDashboard";
-import Users from "../pages/Users";
-import Settings from "../pages/Settings";
+import OJTReports from "../pages/admin/OJTReports";
+import AttendanceReports from "../pages/admin/AttendanceReports";
+import AdminReportsDashboard from "../pages/admin/AdminReportsDashboard";
+import Users from "../pages/admin/Users";
+import Settings from "../pages/admin/Settings";
 import CoordinatorDashboard from "../pages/CoordinatorDasboard";
 import CoordinatorReportsDashboard from "../pages/CoordinatorReportsDashboardPage";
 
@@ -44,7 +43,7 @@ function AppRoutes() {
             <Route path="reports-dashboard" element={<AdminReportsDashboard />} />
             <Route path="application" element={<Application />} />
             <Route path="students" element={<Students />} />
-            <Route path="partnercompanies" element={<Positions />} />
+            <Route path="partnercompanies" element={<PartnerCompanies />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="ojtreports" element={<OJTReports />} />
             <Route path="attendancereports" element={<AttendanceReports />} />

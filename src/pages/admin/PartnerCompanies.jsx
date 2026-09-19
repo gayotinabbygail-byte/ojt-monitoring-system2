@@ -1,0 +1,544 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Building2,
+  CheckCircle2,
+  Eye,
+  MapPin,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  createCollectionDocument,
+  deleteCollectionDocument,
+  subscribeToCollection,
+  updateCollectionDocument,
+} from "../../services/firestoreDataService";
+import "../../styles/partner-data.css";
+
+const defaults = {
+  name: "",
+  industry: "",
+  location: "",
+  contact: "",
+  phone: "",
+  email: "",
+  address: "",
+  status: "Active",
+};
+const normalizeCompany = (item) => ({
+  ...item,
+  name: item.name || item.companyName || "Unnamed company",
+  industry: item.industry || item.businessType || "Not provided",
+  location: item.location || item.address || "Not provided",
+  contact: item.contact || item.contactPerson || "Not provided",
+  phone: item.phone || "Not provided",
+  email: item.email || "Not provided",
+  address: item.address || item.location || "Not provided",
+  students: Number(item.students || item.assignedStudents || 0),
+  slots: Number(item.slots || item.availableSlots || 0),
+  status: item.status || "Active",
+});
+
+function PartnerCompanies() {
+  const [companies, setCompanies] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
+  const [search, setSearch] = useState("");
+  const [industry, setIndustry] = useState("All industries");
+  const [status, setStatus] = useState("All statuses");
+  const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(defaults);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  useEffect(
+    () =>
+      subscribeToCollection(
+        "partnerCompanies",
+        [],
+        (items) => {
+          setCompanies(items.map(normalizeCompany));
+          setLoading(false);
+          setError("");
+        },
+        (snapshotError) => {
+          console.error("Unable to load partner companies:", snapshotError);
+          setError(
+            snapshotError.code === "permission-denied"
+              ? "You do not have permission to view partner companies."
+              : "Partner companies could not be loaded.",
+          );
+          setCompanies([]);
+          setLoading(false);
+        },
+      ),
+    [retryKey],
+  );
+  useEffect(
+    () =>
+      subscribeToCollection(
+        "students",
+        [],
+        (items) => setStudents(items),
+        (snapshotError) =>
+          console.error(
+            "Unable to load students for partner company counts:",
+            snapshotError,
+          ),
+      ),
+    [],
+  );
+  const assignedByCompany = useMemo(
+    () =>
+      students.reduce((counts, student) => {
+        const company =
+          student.company || student.partnerCompany || student.companyName;
+        if (company) counts[company] = (counts[company] || 0) + 1;
+        return counts;
+      }, {}),
+    [students],
+  );
+  const companiesWithCounts = useMemo(
+    () =>
+      companies.map((company) => ({
+        ...company,
+        students: assignedByCompany[company.name] ?? company.students,
+      })),
+    [assignedByCompany, companies],
+  );
+  const industries = [
+    ...new Set(companies.map((company) => company.industry).filter(Boolean)),
+  ];
+  const filtered = useMemo(
+    () =>
+      companiesWithCounts.filter((company) => {
+        const query = search.toLowerCase().trim();
+        return (
+          (!query ||
+            `${company.name} ${company.industry} ${company.location} ${company.contact}`
+              .toLowerCase()
+              .includes(query)) &&
+          (industry === "All industries" || company.industry === industry) &&
+          (status === "All statuses" || company.status === status)
+        );
+      }),
+    [companiesWithCounts, industry, search, status],
+  );
+  const active = companiesWithCounts.filter(
+    (company) => company.status === "Active",
+  ).length;
+  const slots = companiesWithCounts.reduce(
+    (total, company) => total + company.slots,
+    0,
+  );
+  const showNotice = (message) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 2400);
+  };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(defaults);
+    setSelected(null);
+  };
+  const openEdit = (company) => {
+    setEditing(company);
+    setForm({
+      name: company.name,
+      industry: company.industry,
+      location: company.location,
+      contact: company.contact,
+      phone: company.phone,
+      email: company.email === "Not provided" ? "" : company.email,
+      address: company.address,
+      status: company.status,
+    });
+    setSelected(null);
+  };
+  const saveCompany = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const data = {
+        name: form.name.trim(),
+        industry: form.industry.trim(),
+        location: form.location.trim(),
+        contact: form.contact.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        address: form.address.trim(),
+        status: form.status,
+      };
+      if (editing)
+        await updateCollectionDocument("partnerCompanies", editing.id, data);
+      else await createCollectionDocument("partnerCompanies", data);
+      setEditing(null);
+      setForm(defaults);
+      showNotice(
+        editing ? "Partner company updated." : "Partner company added.",
+      );
+    } catch (saveError) {
+      console.error("Unable to save partner company:", saveError);
+      showNotice("Partner company could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const removeCompany = async (company) => {
+    try {
+      await deleteCollectionDocument("partnerCompanies", company.id);
+      setSelected(null);
+      showNotice("Partner company deleted.");
+    } catch (deleteError) {
+      console.error("Unable to delete partner company:", deleteError);
+      showNotice("Partner company could not be deleted.");
+    }
+  };
+
+  return (
+    <main className="partner-data-page">
+      <header className="partner-data-header">
+        <div>
+          <p>OJT management</p>
+          <h1>Partner Companies</h1>
+          <span>Manage partner companies and available OJT opportunities.</span>
+        </div>
+        <button
+          type="button"
+          className="partner-data-primary"
+          onClick={openCreate}
+        >
+          <Plus size={16} /> Add Partner Company
+        </button>
+      </header>
+      <section className="partner-data-summary">
+        <Stat
+          icon={<Building2 size={18} />}
+          label="Total Companies"
+          value={loading ? "..." : companies.length}
+        />
+        <Stat
+          icon={<CheckCircle2 size={18} />}
+          label="Active Companies"
+          value={loading ? "..." : active}
+        />
+        <Stat
+          icon={<Users size={18} />}
+          label="Assigned Students"
+          value={
+            loading
+              ? "..."
+              : companiesWithCounts.reduce(
+                  (sum, company) => sum + company.students,
+                  0,
+                )
+          }
+        />
+        <Stat
+          icon={<MapPin size={18} />}
+          label="Available Slots"
+          value={loading ? "..." : slots}
+        />
+      </section>
+      <section className="partner-data-panel">
+        <div className="partner-data-toolbar">
+          <label>
+            <Search size={16} />
+            <input
+              placeholder="Search company, industry, or location"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <select
+            value={industry}
+            onChange={(event) => setIndustry(event.target.value)}
+          >
+            <option>All industries</option>
+            {industries.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </select>
+          <select
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option>All statuses</option>
+            <option>Active</option>
+            <option>Pending</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+        {error && (
+          <EmptyState
+            message={error}
+            retry={() => {
+              setLoading(true);
+              setRetryKey((key) => key + 1);
+            }}
+          />
+        )}
+        {loading && !error && (
+          <EmptyState message="Loading partner companies..." />
+        )}
+        {!loading && !error && (
+          <div className="partner-data-table-wrap">
+            <table className="partner-data-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Industry</th>
+                  <th>Location</th>
+                  <th>Contact</th>
+                  <th>Students</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((company) => (
+                  <tr key={company.id}>
+                    <td>
+                      <strong>{company.name}</strong>
+                      <span>{company.email}</span>
+                    </td>
+                    <td>{company.industry}</td>
+                    <td>
+                      <MapPin size={13} /> {company.location}
+                    </td>
+                    <td>
+                      <strong>{company.contact}</strong>
+                      <span>{company.phone}</span>
+                    </td>
+                    <td>
+                      {company.students} assigned · {company.slots} open
+                    </td>
+                    <td>
+                      <em
+                        className={`partner-data-status ${company.status.toLowerCase()}`}
+                      >
+                        {company.status}
+                      </em>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(company)}
+                        title="View company"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(company)}
+                        title="Edit company"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCompany(company)}
+                        title="Delete company"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <EmptyState message="No partner companies match your filters." />
+            )}
+          </div>
+        )}
+        <footer>
+          Showing {filtered.length} of {companies.length} partner companies
+        </footer>
+      </section>
+      {(selected || editing) && (
+        <CompanyDialog
+          company={selected}
+          editing={editing}
+          form={form}
+          setForm={setForm}
+          saving={saving}
+          onClose={() => {
+            setSelected(null);
+            setEditing(null);
+          }}
+          onSave={saveCompany}
+          onDelete={removeCompany}
+        />
+      )}
+      {notice && <div className="partner-data-notice">{notice}</div>}
+    </main>
+  );
+}
+
+function Stat({ icon, label, value }) {
+  return (
+    <article>
+      <span>{icon}</span>
+      <div>
+        <small>{label}</small>
+        <strong>{value}</strong>
+      </div>
+    </article>
+  );
+}
+function EmptyState({ message, retry }) {
+  return (
+    <div className="partner-data-empty">
+      <Building2 size={24} />
+      <strong>{message}</strong>
+      {retry && (
+        <button type="button" onClick={retry}>
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+function CompanyDialog({
+  company,
+  editing,
+  form,
+  setForm,
+  saving,
+  onClose,
+  onSave,
+  onDelete,
+}) {
+  const update = (key, value) =>
+    setForm((current) => ({ ...current, [key]: value }));
+  if (company)
+    return (
+      <div className="partner-data-backdrop" role="presentation">
+        <section className="partner-data-dialog">
+          <header>
+            <div>
+              <p>Company details</p>
+              <h2>{company.name}</h2>
+              <span>
+                {company.industry} · {company.location}
+              </span>
+            </div>
+            <button type="button" onClick={onClose}>
+              <X size={17} />
+            </button>
+          </header>
+          <div className="partner-data-details">
+            <div>
+              <small>Contact</small>
+              <strong>{company.contact}</strong>
+            </div>
+            <div>
+              <small>Email</small>
+              <strong>{company.email}</strong>
+            </div>
+            <div>
+              <small>Placement</small>
+              <strong>
+                {company.students} assigned · {company.slots} open
+              </strong>
+            </div>
+            <div>
+              <small>Status</small>
+              <strong>{company.status}</strong>
+            </div>
+            <div className="full">
+              <small>Address</small>
+              <strong>{company.address}</strong>
+            </div>
+          </div>
+          <footer>
+            <button
+              type="button"
+              className="partner-data-secondary"
+              onClick={onClose}
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              className="partner-data-danger"
+              onClick={() => onDelete(company)}
+            >
+              Delete
+            </button>
+          </footer>
+        </section>
+      </div>
+    );
+  return (
+    <div className="partner-data-backdrop" role="presentation">
+      <form className="partner-data-dialog" onSubmit={onSave}>
+        <header>
+          <div>
+            <p>Company record</p>
+            <h2>{editing ? "Edit company" : "Add company"}</h2>
+          </div>
+          <button type="button" onClick={onClose}>
+            <X size={17} />
+          </button>
+        </header>
+        <div className="partner-data-form">
+          {[
+            ["name", "Company name"],
+            ["industry", "Industry"],
+            ["location", "Location"],
+            ["contact", "Contact person"],
+            ["email", "Email"],
+            ["phone", "Phone"],
+            ["address", "Address"],
+          ].map(([key, label]) => (
+            <label key={key}>
+              <span>{label}</span>
+              <input
+                value={form[key]}
+                onChange={(event) => update(key, event.target.value)}
+                required={key === "name"}
+              />
+            </label>
+          ))}
+          <label>
+            <span>Status</span>
+            <select
+              value={form.status}
+              onChange={(event) => update("status", event.target.value)}
+            >
+              <option>Active</option>
+              <option>Pending</option>
+              <option>Inactive</option>
+            </select>
+          </label>
+        </div>
+        <footer>
+          <button
+            type="button"
+            className="partner-data-secondary"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="partner-data-primary"
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save company"}
+          </button>
+        </footer>
+      </form>
+    </div>
+  );
+}
+
+export default PartnerCompanies;

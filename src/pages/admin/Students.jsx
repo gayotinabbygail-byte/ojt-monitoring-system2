@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { COURSES } from "../constants/courses";
+import { COURSES } from "../../constants/courses";
 
 const initialStudents = [
   { id: "STU-2023-0184", name: "Maria Santos", course: "Bachelor of Science in Information Technology", company: "Isabela Tech Solutions", hours: 320, target: 486, status: "Active", email: "maria.santos@lccian.edu.ph", phone: "0917 555 0184" },

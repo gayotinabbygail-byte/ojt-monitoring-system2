@@ -12,8 +12,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../services/firebase";
-import "../styles/attendance-reports-management.css";
+import { db } from "../../services/firebase";
+import "../../styles/attendance-reports-management.css";
 
 const statuses = ["Present", "Late", "Absent", "Excused"];
 const today = () => new Date().toISOString().slice(0, 10);
