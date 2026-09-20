@@ -1,6 +1,16 @@
 import { Outlet, useNavigate, NavLink } from "react-router-dom";
 import { useState } from "react";
-import { LayoutDashboard, FileUser, ListChecks, BookOpenCheck, ChartCandlestick, Summary, Settings, Menu, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileUser,
+  ListChecks,
+  BookOpenCheck,
+  ChartCandlestick,
+  Summary,
+  Settings,
+  Menu,
+  LogOut,
+} from "lucide-react";
 import { logout } from "../services/authService";
 import { useAuth } from "../context/useAuth";
 import "../styles/AdminLayout.css";
@@ -25,7 +35,9 @@ function CoordinatorDashboard() {
   };
 
   return (
-    <div className={`admin-layout student-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+    <div
+      className={`admin-layout student-layout ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
+    >
       <header className="admin-header">
         <div className="admin-header-left">
           <button
@@ -38,7 +50,11 @@ function CoordinatorDashboard() {
             <Menu size={22} />
           </button>
           <div className="admin-title">
-            <img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
+            <img
+              src={hero}
+              alt="OJT Monitoring System LCCI"
+              className="admin-logo"
+            />
             <h2>Student OJT Portal</h2>
           </div>
         </div>
@@ -49,27 +65,79 @@ function CoordinatorDashboard() {
               ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
               : user?.email || "Student"}
           </span>
-          <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+          <button type="button" className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
 
       <div className="admin-body">
         <aside className="sidebar">
-          <StudentNavLink to="/Student" label="Dashboard" icon={LayoutDashboard} end onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/application" label="My Application" icon={FileUser} onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/attendance" label="My Attendance" icon={ListChecks} onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/ojthours" label="OJT Hours" icon={BookOpenCheck} onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/evaluation" label="Evaluation" icon={ChartCandlestick} onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/ojtreports" label="OJT Reports" icon={Summary} onClick={closeSidebarOnMobile} />
-          <StudentNavLink to="/Student/settings" label="Settings" icon={Settings} onClick={closeSidebarOnMobile} />
-          <button type="button" className="nav-link sidebar-logout" onClick={handleLogout} title="Logout">
-            <span className="nav-icon"><LogOut size={18} /></span>
+          <StudentNavLink
+            to="/Student"
+            label="Dashboard"
+            icon={LayoutDashboard}
+            end
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/application"
+            label="My Application"
+            icon={FileUser}
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/attendance"
+            label="My Attendance"
+            icon={ListChecks}
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/ojthours"
+            label="OJT Hours"
+            icon={BookOpenCheck}
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/evaluation"
+            label="Evaluation"
+            icon={ChartCandlestick}
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/ojtreports"
+            label="OJT Reports"
+            icon={Summary}
+            onClick={closeSidebarOnMobile}
+          />
+          <StudentNavLink
+            to="/Student/settings"
+            label="Settings"
+            icon={Settings}
+            onClick={closeSidebarOnMobile}
+          />
+          <button
+            type="button"
+            className="nav-link sidebar-logout"
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <span className="nav-icon">
+              <LogOut size={18} />
+            </span>
             <span className="nav-text">Logout</span>
           </button>
         </aside>
 
-        {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
-        <main className="content"><Outlet /></main>
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <main className="content">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
@@ -84,7 +152,9 @@ function StudentNavLink({ to, label, icon: Icon, end, onClick }) {
       className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
       title={label}
     >
-      <span className="nav-icon"><Icon size={18} /></span>
+      <span className="nav-icon">
+        <Icon size={18} />
+      </span>
       <span className="nav-text">{label}</span>
     </NavLink>
   );

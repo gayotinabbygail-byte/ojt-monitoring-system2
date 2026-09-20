@@ -75,7 +75,11 @@ function AdminLayout() {
 
           {/* Application Title */}
           <div className="admin-title">
-            <img src={hero} alt="OJT Monitoring System LCCI" className="admin-logo" />
+            <img
+              src={hero}
+              alt="OJT Monitoring System LCCI"
+              className="admin-logo"
+            />
             <h2>OJT Monitoring System LCCI</h2>
           </div>
         </div>
@@ -96,7 +100,6 @@ function AdminLayout() {
 
       <div className="admin-body">
         <aside className="sidebar">
-
           <NavLink
             to={basePath}
             end
@@ -107,11 +110,11 @@ function AdminLayout() {
             title="Dashboard"
           >
             <span className="nav-icon">
-                <LayoutDashboard size={18} />
-              </span>
+              <LayoutDashboard size={18} />
+            </span>
 
-              <span className="nav-text">Dashboard</span>
-            </NavLink>
+            <span className="nav-text">Dashboard</span>
+          </NavLink>
 
           <NavLink
             to={`${basePath}/reports-dashboard`}
@@ -139,13 +142,13 @@ function AdminLayout() {
             title="Applications"
           >
             <span className="nav-icon">
-                <FileUser size={18} />
-              </span>
+              <FileUser size={18} />
+            </span>
 
-              <span className="nav-text">Applications</span>
-            </NavLink>
+            <span className="nav-text">Applications</span>
+          </NavLink>
 
-            <NavLink
+          <NavLink
             to={`${basePath}/students`}
             end
             onClick={closeSidebarOnMobile}
@@ -155,13 +158,13 @@ function AdminLayout() {
             title="Students"
           >
             <span className="nav-icon">
-                <BookOpen size={18} />
-              </span>
+              <BookOpen size={18} />
+            </span>
 
-              <span className="nav-text">Students</span>
-            </NavLink>
+            <span className="nav-text">Students</span>
+          </NavLink>
 
-            <NavLink
+          <NavLink
             to={`${basePath}/partnercompanies`}
             end
             onClick={closeSidebarOnMobile}
@@ -171,31 +174,31 @@ function AdminLayout() {
             title="Partner Companies"
           >
             <span className="nav-icon">
-                <Handshake size={18} />
+              <Handshake size={18} />
+            </span>
+
+            <span className="nav-text">Partner Companies</span>
+          </NavLink>
+
+          {user?.role === "admin" && (
+            <NavLink
+              to={`${basePath}/ojtcoordinators`}
+              end
+              onClick={closeSidebarOnMobile}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+              title="OJT Coordinators"
+            >
+              <span className="nav-icon">
+                <FileAxis3d size={18} />
               </span>
 
-              <span className="nav-text">Partner Companies</span>
+              <span className="nav-text">OJT Coordinators</span>
             </NavLink>
+          )}
 
-            {user?.role === "admin" && (
-              <NavLink
-                to={`${basePath}/ojtcoordinators`}
-                end
-                onClick={closeSidebarOnMobile}
-                className={({ isActive }) =>
-                  isActive ? "nav-link active" : "nav-link"
-                }
-                title="OJT Coordinators"
-              >
-                <span className="nav-icon">
-                  <FileAxis3d size={18} />
-                </span>
-
-                <span className="nav-text">OJT Coordinators</span>
-              </NavLink>
-            )}
-
-            <NavLink
+          <NavLink
             to={`${basePath}/attendance`}
             end
             onClick={closeSidebarOnMobile}
@@ -205,13 +208,13 @@ function AdminLayout() {
             title="Attendance"
           >
             <span className="nav-icon">
-                <ListChecks size={18} />
-              </span>
+              <ListChecks size={18} />
+            </span>
 
-              <span className="nav-text">Attendance</span>
-            </NavLink>
+            <span className="nav-text">Attendance</span>
+          </NavLink>
 
-                        <NavLink
+          <NavLink
             to={`${basePath}/ojthours`}
             end
             onClick={closeSidebarOnMobile}
@@ -221,13 +224,13 @@ function AdminLayout() {
             title="OJT Hours"
           >
             <span className="nav-icon">
-                <BookOpenCheck size={18} />
-              </span>
+              <BookOpenCheck size={18} />
+            </span>
 
-              <span className="nav-text">OJT Hours</span>
-            </NavLink>
+            <span className="nav-text">OJT Hours</span>
+          </NavLink>
 
-                        <NavLink
+          <NavLink
             to={`${basePath}/evaluation`}
             end
             onClick={closeSidebarOnMobile}
@@ -237,13 +240,13 @@ function AdminLayout() {
             title="Evaluation"
           >
             <span className="nav-icon">
-                <ChartCandlestick size={18} />
-              </span>
+              <ChartCandlestick size={18} />
+            </span>
 
-              <span className="nav-text">Evaluation</span>
-            </NavLink>
+            <span className="nav-text">Evaluation</span>
+          </NavLink>
 
-            <NavLink
+          <NavLink
             to={`${basePath}/ojtreports`}
             end
             onClick={closeSidebarOnMobile}
@@ -253,13 +256,13 @@ function AdminLayout() {
             title="Ojt Reports"
           >
             <span className="nav-icon">
-                <Summary size={18} />
-              </span>
+              <Summary size={18} />
+            </span>
 
-              <span className="nav-text">OJT Reports</span>
-            </NavLink>
+            <span className="nav-text">OJT Reports</span>
+          </NavLink>
 
-            <NavLink
+          <NavLink
             to={`${basePath}/attendancereports`}
             end
             onClick={closeSidebarOnMobile}
@@ -269,31 +272,31 @@ function AdminLayout() {
             title="Attendance Reports"
           >
             <span className="nav-icon">
-                <ListCheck size={18} />
+              <ListCheck size={18} />
+            </span>
+
+            <span className="nav-text">Attendance Reports</span>
+          </NavLink>
+
+          {user?.role === "admin" && (
+            <NavLink
+              to={`${basePath}/users`}
+              end
+              onClick={closeSidebarOnMobile}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+              title="Users"
+            >
+              <span className="nav-icon">
+                <Users size={18} />
               </span>
 
-              <span className="nav-text">Attendance Reports</span>
+              <span className="nav-text">Users</span>
             </NavLink>
+          )}
 
-            {user?.role === "admin" && (
-              <NavLink
-                to={`${basePath}/users`}
-                end
-                onClick={closeSidebarOnMobile}
-                className={({ isActive }) =>
-                  isActive ? "nav-link active" : "nav-link"
-                }
-                title="Users"
-              >
-                <span className="nav-icon">
-                  <Users size={18} />
-                </span>
-
-                <span className="nav-text">Users</span>
-              </NavLink>
-            )}
-
-                        <NavLink
+          <NavLink
             to={`${basePath}/settings`}
             end
             onClick={closeSidebarOnMobile}
@@ -303,24 +306,25 @@ function AdminLayout() {
             title="Settings"
           >
             <span className="nav-icon">
-                <Settings size={18} />
-              </span>
+              <Settings size={18} />
+            </span>
 
-              <span className="nav-text">Settings</span>
-            </NavLink>
+            <span className="nav-text">Settings</span>
+          </NavLink>
 
-            <button type="button" className="nav-link sidebar-logout" onClick={handleLogout} title="Logout">
-              <span className="nav-icon"><LogOut size={18} /></span>
-              <span className="nav-text">Logout</span>
-            </button>
-
-
-
-
-
-          
+          <button
+            type="button"
+            className="nav-link sidebar-logout"
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <span className="nav-icon">
+              <LogOut size={18} />
+            </span>
+            <span className="nav-text">Logout</span>
+          </button>
         </aside>
-                {/* MOBILE OVERLAY - this overlay is displayed on mobile devices when the sidebar is open. Clicking on it will close the sidebar. */}
+        {/* MOBILE OVERLAY - this overlay is displayed on mobile devices when the sidebar is open. Clicking on it will close the sidebar. */}
         {sidebarOpen && (
           <div className="sidebar-overlay" onClick={toggleSidebar} />
         )}
@@ -335,5 +339,3 @@ function AdminLayout() {
 }
 
 export default AdminLayout;
-
-
