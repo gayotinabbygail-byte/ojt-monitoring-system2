@@ -10,12 +10,8 @@ import {
   FileUser,
   Handshake,
   FileAxis3d,
-  ListChecks,
-  BookOpenCheck,
-  ChartCandlestick,
   Summary,
   ListCheck,
-  Users,
   Settings,
   Menu,
   LogOut,
@@ -117,22 +113,6 @@ function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to={`${basePath}/reports-dashboard`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Reports Dashboard"
-          >
-            <span className="nav-icon">
-              <LayoutDashboard size={18} />
-            </span>
-
-            <span className="nav-text">Reports Dashboard</span>
-          </NavLink>
-
-          <NavLink
             to={`${basePath}/application`}
             end
             onClick={closeSidebarOnMobile}
@@ -171,13 +151,13 @@ function AdminLayout() {
             className={({ isActive }) =>
               isActive ? "nav-link active" : "nav-link"
             }
-            title="Partner Companies"
+            title="OJT Supervisors"
           >
             <span className="nav-icon">
               <Handshake size={18} />
             </span>
 
-            <span className="nav-text">Partner Companies</span>
+            <span className="nav-text">OJT Supervisors</span>
           </NavLink>
 
           {user?.role === "admin" && (
@@ -197,54 +177,6 @@ function AdminLayout() {
               <span className="nav-text">OJT Coordinators</span>
             </NavLink>
           )}
-
-          <NavLink
-            to={`${basePath}/attendance`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Attendance"
-          >
-            <span className="nav-icon">
-              <ListChecks size={18} />
-            </span>
-
-            <span className="nav-text">Attendance</span>
-          </NavLink>
-
-          <NavLink
-            to={`${basePath}/ojthours`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="OJT Hours"
-          >
-            <span className="nav-icon">
-              <BookOpenCheck size={18} />
-            </span>
-
-            <span className="nav-text">OJT Hours</span>
-          </NavLink>
-
-          <NavLink
-            to={`${basePath}/evaluation`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Evaluation"
-          >
-            <span className="nav-icon">
-              <ChartCandlestick size={18} />
-            </span>
-
-            <span className="nav-text">Evaluation</span>
-          </NavLink>
 
           <NavLink
             to={`${basePath}/ojtreports`}
@@ -277,24 +209,6 @@ function AdminLayout() {
 
             <span className="nav-text">Attendance Reports</span>
           </NavLink>
-
-          {user?.role === "admin" && (
-            <NavLink
-              to={`${basePath}/users`}
-              end
-              onClick={closeSidebarOnMobile}
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-              title="Users"
-            >
-              <span className="nav-icon">
-                <Users size={18} />
-              </span>
-
-              <span className="nav-text">Users</span>
-            </NavLink>
-          )}
 
           <NavLink
             to={`${basePath}/settings`}

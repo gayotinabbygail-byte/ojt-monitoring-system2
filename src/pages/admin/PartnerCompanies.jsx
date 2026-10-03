@@ -31,7 +31,7 @@ const defaults = {
 };
 const normalizeCompany = (item) => ({
   ...item,
-  name: item.name || item.companyName || "Unnamed company",
+  name: item.name || item.companyName || "Unnamed supervisor",
   industry: item.industry || item.businessType || "Not provided",
   location: item.location || item.address || "Not provided",
   contact: item.contact || item.contactPerson || "Not provided",
@@ -69,11 +69,11 @@ function PartnerCompanies() {
           setError("");
         },
         (snapshotError) => {
-          console.error("Unable to load partner companies:", snapshotError);
+          console.error("Unable to load OJT supervisors:", snapshotError);
           setError(
             snapshotError.code === "permission-denied"
-              ? "You do not have permission to view partner companies."
-              : "Partner companies could not be loaded.",
+              ? "You do not have permission to view OJT supervisors."
+              : "OJT supervisors could not be loaded.",
           );
           setCompanies([]);
           setLoading(false);
@@ -89,7 +89,7 @@ function PartnerCompanies() {
         (items) => setStudents(items),
         (snapshotError) =>
           console.error(
-            "Unable to load students for partner company counts:",
+            "Unable to load students for supervisor counts:",
             snapshotError,
           ),
       ),
@@ -181,11 +181,11 @@ function PartnerCompanies() {
       setEditing(null);
       setForm(defaults);
       showNotice(
-        editing ? "Partner company updated." : "Partner company added.",
+        editing ? "OJT supervisor updated." : "OJT supervisor added.",
       );
     } catch (saveError) {
-      console.error("Unable to save partner company:", saveError);
-      showNotice("Partner company could not be saved.");
+      console.error("Unable to save OJT supervisor:", saveError);
+      showNotice("OJT supervisor could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -194,10 +194,10 @@ function PartnerCompanies() {
     try {
       await deleteCollectionDocument("partnerCompanies", company.id);
       setSelected(null);
-      showNotice("Partner company deleted.");
+      showNotice("OJT supervisor deleted.");
     } catch (deleteError) {
-      console.error("Unable to delete partner company:", deleteError);
-      showNotice("Partner company could not be deleted.");
+      console.error("Unable to delete OJT supervisor:", deleteError);
+      showNotice("OJT supervisor could not be deleted.");
     }
   };
 
@@ -206,26 +206,26 @@ function PartnerCompanies() {
       <header className="partner-data-header">
         <div>
           <p>OJT management</p>
-          <h1>Partner Companies</h1>
-          <span>Manage partner companies and available OJT opportunities.</span>
+          <h1>OJT Supervisors</h1>
+          <span>Manage OJT supervisors and assigned student opportunities.</span>
         </div>
         <button
           type="button"
           className="partner-data-primary"
           onClick={openCreate}
         >
-          <Plus size={16} /> Add Partner Company
+          <Plus size={16} /> Add OJT Supervisor
         </button>
       </header>
       <section className="partner-data-summary">
         <Stat
           icon={<Building2 size={18} />}
-          label="Total Companies"
+          label="Total Supervisors"
           value={loading ? "..." : companies.length}
         />
         <Stat
           icon={<CheckCircle2 size={18} />}
-          label="Active Companies"
+          label="Active Supervisors"
           value={loading ? "..." : active}
         />
         <Stat
@@ -251,7 +251,7 @@ function PartnerCompanies() {
           <label>
             <Search size={16} />
             <input
-              placeholder="Search company, industry, or location"
+              placeholder="Search supervisor, industry, or location"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -285,14 +285,14 @@ function PartnerCompanies() {
           />
         )}
         {loading && !error && (
-          <EmptyState message="Loading partner companies..." />
+          <EmptyState message="Loading OJT supervisors..." />
         )}
         {!loading && !error && (
           <div className="partner-data-table-wrap">
             <table className="partner-data-table">
               <thead>
                 <tr>
-                  <th>Company</th>
+                  <th>Supervisor</th>
                   <th>Industry</th>
                   <th>Location</th>
                   <th>Contact</th>
@@ -330,14 +330,14 @@ function PartnerCompanies() {
                       <button
                         type="button"
                         onClick={() => setSelected(company)}
-                        title="View company"
+                        title="View supervisor"
                       >
                         <Eye size={15} />
                       </button>
                       <button
                         type="button"
                         onClick={() => openEdit(company)}
-                        title="Edit company"
+                        title="Edit supervisor"
                       >
                         <Pencil size={15} />
                       </button>
@@ -354,12 +354,12 @@ function PartnerCompanies() {
               </tbody>
             </table>
             {filtered.length === 0 && (
-              <EmptyState message="No partner companies match your filters." />
+              <EmptyState message="No OJT supervisors match your filters." />
             )}
           </div>
         )}
         <footer>
-          Showing {filtered.length} of {companies.length} partner companies
+          Showing {filtered.length} of {companies.length} OJT supervisors
         </footer>
       </section>
       {(selected || editing) && (
@@ -424,7 +424,7 @@ function CompanyDialog({
         <section className="partner-data-dialog">
           <header>
             <div>
-              <p>Company details</p>
+              <p>Supervisor details</p>
               <h2>{company.name}</h2>
               <span>
                 {company.industry} · {company.location}
@@ -482,8 +482,8 @@ function CompanyDialog({
       <form className="partner-data-dialog" onSubmit={onSave}>
         <header>
           <div>
-            <p>Company record</p>
-            <h2>{editing ? "Edit company" : "Add company"}</h2>
+            <p>Supervisor record</p>
+            <h2>{editing ? "Edit supervisor" : "Add supervisor"}</h2>
           </div>
           <button type="button" onClick={onClose}>
             <X size={17} />

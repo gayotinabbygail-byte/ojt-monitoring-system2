@@ -78,7 +78,7 @@ function Dashboard() {
   const stats = [
     ["Total Students", students.length, "All student records", Users, "blue"],
     ["Pending Applications", pendingApplications.length, "Needs review", FileCheck2, "coral"],
-    ["Partner Companies", companies.length, "Registered partners", Building2, "teal"],
+    ["OJT Supervisors", companies.length, "Registered supervisors", Building2, "teal"],
     ["OJT Coordinators", coordinators.length, "Active user profiles", UserRoundCog, "amber"],
     ["Students Currently on OJT", students.filter((item) => item.status === "Ongoing").length, "Ongoing placements", ClipboardClock, "blue"],
     ["Completed OJT", students.filter((item) => item.status === "Completed").length, "Required hours reached", CheckCircle2, "teal"],

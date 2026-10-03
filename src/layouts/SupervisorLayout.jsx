@@ -102,7 +102,7 @@ function SupervisorLayout() {
           />
           <SupervisorNavLink
             to="/supervisor/partnercompanies"
-            label="Partner Companies"
+            label="OJT Supervisors"
             icon={Handshake}
             onClick={closeSidebarOnMobile}
           />

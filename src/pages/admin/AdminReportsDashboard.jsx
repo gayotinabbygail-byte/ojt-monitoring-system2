@@ -298,7 +298,7 @@ function AdminReportsDashboard() {
           onClick={() => navigate("/admin/partnercompanies")}
         >
           <Building2 size={20} />
-          <span>Partner Companies</span>
+          <span>OJT Supervisors</span>
           <strong>{data.partnerCompanies.length}</strong>
           <ArrowRight size={16} />
         </button>

@@ -67,7 +67,7 @@ function CoordinatorReportsDashboard() {
     ["Assigned Students", students.length, Users, "students"],
     ["Pending Applications", pendingApplications.length, FileText, "application"],
     ["Attendance Issues", attendanceIssues.length, AlertTriangle, "attendancereports"],
-    ["Partner Companies", data.partnerCompanies.length, Building2, "partnercompanies"],
+    ["OJT Supervisors", data.partnerCompanies.length, Building2, "partnercompanies"],
   ];
 
   if (loading) {

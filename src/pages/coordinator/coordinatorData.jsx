@@ -105,10 +105,10 @@ export function normalizedStudents(students, attendance) {
     ).toLowerCase();
     const status =
       rawStatus.includes("complete") || completed >= required
-        ? "Completed"
+        ? "COMPLETED"
         : rawStatus.includes("pending") || rawStatus.includes("not started")
-          ? "Pending"
-          : "Ongoing";
+          ? "PROCESSING"
+          : "DEPLOYED";
     return {
       ...student,
       studentId: studentIdOf(student),
