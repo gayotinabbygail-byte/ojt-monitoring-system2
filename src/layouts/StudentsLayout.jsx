@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   FileUser,
   ListChecks,
-  BookOpenCheck,
   ChartCandlestick,
   Summary,
   Settings,
@@ -90,18 +89,6 @@ function StudentDashboard() {
             to="/Student/attendance"
             label="My Attendance"
             icon={ListChecks}
-            onClick={closeSidebarOnMobile}
-          />
-          <StudentNavLink
-            to="/Student/ojthours"
-            label="OJT Hours"
-            icon={BookOpenCheck}
-            onClick={closeSidebarOnMobile}
-          />
-          <StudentNavLink
-            to="/Student/evaluation"
-            label="Evaluation"
-            icon={ChartCandlestick}
             onClick={closeSidebarOnMobile}
           />
           <StudentNavLink
