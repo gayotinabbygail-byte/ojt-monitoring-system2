@@ -41,8 +41,13 @@ service cloud.firestore {
     }
 
     match /attendance/{attendanceId} {
-      allow read: if isAdmin() || isCoordinator() || isSupervisor() || isStaff();
-      allow create, update, delete: if isAdmin() || isSupervisor() || isStaff();
+      allow read: if isAdmin() || isCoordinator() || isSupervisor() || isStaff() ||
+        (signedIn() && resource.data.studentUid == request.auth.uid);
+      allow create, update, delete: if isAdmin() || isCoordinator() || isStaff();
+    }
+
+    match /attendanceQrScans/{scanId} {
+      allow read, write: if false;
     }
 
     match /applications/{applicationId} {

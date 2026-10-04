@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/login";
 import Dashboard from "../pages/Dashboard";
 import RoleRoute from "../services/RoleRoute";
@@ -45,6 +45,7 @@ import SupervisorRequirements from "../pages/supervisor/Requirements";
 import SupervisorSettings from "../pages/supervisor/Settings";
 import SupervisorDailyLogs from "../pages/supervisor/DailyLogs";
 import SupervisorLogout from "../pages/supervisor/Logout";
+import ScanStudentQR from "../pages/supervisor/ScanStudentQR";
 
 const placeholderRoutes = [
   ["ojtcoordinators", "OJT Coordinators"],
@@ -135,6 +136,8 @@ function AppRoutes() {
           }
         >
           <Route index element={<SupervisorDashboard />} />
+          <Route path="scan-student-qr" element={<ScanStudentQR />} />
+          <Route path="generate-attendance-qr" element={<Navigate to="/supervisor/scan-student-qr" replace />} />
           <Route path="students" element={<SupervisorStudents />} />
           <Route path="applications" element={<Application />} />
           <Route path="partnercompanies" element={<PartnerCompanies />} />

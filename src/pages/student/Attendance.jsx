@@ -1,217 +1,278 @@
-import { useMemo, useState } from "react";
-import { CalendarClock, CheckCircle2, Clock3, Search, TimerReset } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarClock, Clock3, QrCode, RefreshCw, ShieldCheck } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { useAuth } from "../../context/useAuth";
+import { issueStudentAttendanceQrToken } from "../../services/attendanceQrService";
+import { db } from "../../services/firebase";
 import "../../styles/student-portal.css";
+import "../../styles/student-attendance-qr.css";
 
-const attendanceSeed = [
-  { date: "2026-09-18", timeInAM: "08:10 AM", timeOutAM: "11:30 AM", timeInPM: "01:00 PM", timeOutPM: "05:15 PM", totalHours: "8h 05m", status: "Present" },
-  { date: "2026-09-17", timeInAM: "08:28 AM", timeOutAM: "11:45 AM", timeInPM: "12:30 PM", timeOutPM: "05:05 PM", totalHours: "7h 37m", status: "Present" },
-  { date: "2026-09-16", timeInAM: "08:00 AM", timeOutAM: "11:45 AM", timeInPM: "12:45 PM", timeOutPM: "05:00 PM", totalHours: "9h 00m", status: "Present" },
-  { date: "2026-09-15", timeInAM: "08:20 AM", timeOutAM: "11:35 AM", timeInPM: "12:50 PM", timeOutPM: "04:50 PM", totalHours: "7h 30m", status: "Present" },
-  { date: "2026-09-12", timeInAM: "08:10 AM", timeOutAM: "11:40 AM", timeInPM: "12:45 PM", timeOutPM: "05:10 PM", totalHours: "8h 00m", status: "Present" },
-  { date: "2026-09-11", timeInAM: "08:00 AM", timeOutAM: "11:30 AM", timeInPM: "12:30 PM", timeOutPM: "05:00 PM", totalHours: "9h 00m", status: "Present" },
-  { date: "2026-09-10", timeInAM: "---", timeOutAM: "---", timeInPM: "---", timeOutPM: "---", totalHours: "0h 00m", status: "Absent" },
-  { date: "2026-09-09", timeInAM: "08:05 AM", timeOutAM: "11:50 AM", timeInPM: "12:45 PM", timeOutPM: "05:15 PM", totalHours: "8h 10m", status: "Present" },
-];
+const TOKEN_REFRESH_MS = 25_000;
 
-const formatDateLabel = (value) =>
-  new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
+function getLocalDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function formatDateLabel(value) {
+  if (!value) return "—";
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+}
 
 function Attendance() {
-  const [search, setSearch] = useState("");
-  const [timeInStatus, setTimeInStatus] = useState(false);
-  const [timeOutStatus, setTimeOutStatus] = useState(false);
+  const { user } = useAuth();
+  const [qr, setQr] = useState(null);
+  const [qrError, setQrError] = useState("");
+  const [clockNow, setClockNow] = useState(0);
+  const [attendanceState, setAttendanceState] = useState({
+    uid: "",
+    records: [],
+    loading: true,
+    error: "",
+  });
+  const studentUid = user?.uid;
+  const currentAttendanceState = attendanceState.uid === studentUid
+    ? attendanceState
+    : { records: [], loading: Boolean(studentUid), error: "" };
+  const attendanceRecords = currentAttendanceState.records;
+  const attendanceLoading = currentAttendanceState.loading;
+  const attendanceError = currentAttendanceState.error;
+  const secondsRemaining = qr
+    ? Math.min(30, Math.max(0, Math.ceil((qr.expiresAt - clockNow) / 1000)))
+    : 0;
+  const qrIsActive = Boolean(qr?.uid === studentUid && qr.token && secondsRemaining > 0);
+  const todaysRecords = useMemo(
+    () => attendanceRecords.filter((record) => record.date === getLocalDate()),
+    [attendanceRecords],
+  );
+  const todaysAttendance = todaysRecords[0];
+  const accumulatedHours = attendanceRecords.reduce(
+    (total, record) => total + Number(record.totalHours ?? record.hours ?? 0),
+    0,
+  );
 
-  const filteredRecords = useMemo(() => {
-    if (!search.trim()) return attendanceSeed;
-    return attendanceSeed.filter((record) =>
-      record.date.includes(search.trim()) || record.status.toLowerCase().includes(search.trim().toLowerCase())
+  useEffect(() => {
+    if (!studentUid || user?.role !== "student") return undefined;
+
+    let active = true;
+    let issuingToken = false;
+    const refreshToken = async () => {
+      if (issuingToken) return;
+      issuingToken = true;
+      setQrError("");
+      try {
+        const result = await issueStudentAttendanceQrToken();
+        if (active) {
+          setQr({
+            uid: studentUid,
+            token: result.token,
+            studentId: result.studentId,
+            expiresAt: result.expiresAt,
+          });
+        }
+      } catch (error) {
+        console.error("Unable to generate the student attendance QR code:", error);
+        if (active) {
+          setQrError(error.message || "The attendance QR code could not be generated.");
+        }
+      } finally {
+        issuingToken = false;
+      }
+    };
+
+    void refreshToken();
+    const refreshInterval = window.setInterval(() => {
+      void refreshToken();
+    }, TOKEN_REFRESH_MS);
+
+    return () => {
+      active = false;
+      window.clearInterval(refreshInterval);
+    };
+  }, [studentUid, user?.role]);
+
+  useEffect(() => {
+    const countdownInterval = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(countdownInterval);
+  }, []);
+
+  useEffect(() => {
+    if (!studentUid || user?.role !== "student") return undefined;
+
+    return onSnapshot(
+      query(collection(db, "attendance"), where("studentUid", "==", studentUid)),
+      (snapshot) => {
+        const records = snapshot.docs
+          .map((document) => ({ id: document.id, ...document.data() }))
+          .sort((left, right) =>
+            `${right.date || ""} ${right.timeIn || ""}`.localeCompare(
+              `${left.date || ""} ${left.timeIn || ""}`,
+            ),
+          );
+        setAttendanceState({ uid: studentUid, records, loading: false, error: "" });
+      },
+      (error) => {
+        console.error("Unable to load student attendance history:", error);
+        setAttendanceState({
+          uid: studentUid,
+          records: [],
+          loading: false,
+          error: "Attendance history could not be loaded. Check your Firestore permissions.",
+        });
+      },
     );
-  }, [search]);
-
-  const presentCount = attendanceSeed.filter((item) => item.status === "Present").length;
-  const absentCount = attendanceSeed.filter((item) => item.status === "Absent").length;
-  const todayHours = "8h 05m";
-  const accumulatedHours = "320h 00m";
-
-  const handleTimeIn = () => setTimeInStatus((current) => !current);
-  const handleTimeOut = () => setTimeOutStatus((current) => !current);
+  }, [studentUid, user?.role]);
 
   return (
     <div className="student-portal-page">
       <header className="student-page-header">
         <div>
           <p className="student-meta">Daily attendance</p>
-          <h1>Attendance & DTR</h1>
-        </div>
-        <div className="student-header-actions">
-          <button type="button" className="student-button secondary" onClick={handleTimeIn}>
-            <Clock3 size={15} />
-            {timeInStatus ? "Timed In" : "Time In"}
-          </button>
-          <button type="button" className="student-button primary" onClick={handleTimeOut}>
-            <TimerReset size={15} />
-            {timeOutStatus ? "Timed Out" : "Time Out"}
-          </button>
+          <h1>My Attendance</h1>
+          <p>Show your current QR code to your OJT supervisor to record attendance.</p>
         </div>
       </header>
 
-      <section className="student-overview-grid">
-        <div className="student-card student-stat-card">
-          <p className="student-stat-label">Current date</p>
-          <div className="student-stat-value">
-            <strong>{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong>
-            <span className="student-stat-trend positive">Today</span>
+      <section className="student-attendance-qr-layout">
+        <article className="student-card student-attendance-qr-card">
+          <div className="student-attendance-qr-heading">
+            <span className="student-attendance-qr-icon"><QrCode size={20} /></span>
+            <div>
+              <h2>Your Attendance QR Code</h2>
+              <p>Keep this page open and let your supervisor scan the code.</p>
+            </div>
           </div>
-        </div>
-        <div className="student-card student-stat-card">
-          <p className="student-stat-label">AM Time In</p>
-          <div className="student-stat-value">
-            <strong>{timeInStatus ? "08:10 AM" : "Not yet"}</strong>
-            <span className="student-stat-trend neutral">Status</span>
-          </div>
-        </div>
-        <div className="student-card student-stat-card">
-          <p className="student-stat-label">PM Time Out</p>
-          <div className="student-stat-value">
-            <strong>{timeOutStatus ? "05:15 PM" : "Pending"}</strong>
-            <span className="student-stat-trend neutral">Status</span>
-          </div>
-        </div>
-        <div className="student-card student-stat-card">
-          <p className="student-stat-label">Today's hours</p>
-          <div className="student-stat-value">
-            <strong>{todayHours}</strong>
-            <span className="student-stat-trend positive">On track</span>
-          </div>
-        </div>
-      </section>
 
-      <section className="student-grid-two">
-        <div className="student-card student-panel">
+          {qrError && <div className="student-attendance-qr-error" role="alert">{qrError}</div>}
+          {qrIsActive ? (
+            <div className="student-attendance-qr-code">
+              <QRCodeSVG value={qr.token} size={236} level="M" includeMargin />
+            </div>
+          ) : (
+            <div className="student-attendance-qr-placeholder" role="status">
+              <QrCode size={36} />
+              <span>{qrError ? "QR code unavailable" : "Generating a secure QR code..."}</span>
+            </div>
+          )}
+
+          <div className="student-attendance-qr-id">
+            <span>Student ID</span>
+            <strong>{qr?.studentId || user?.studentId || studentUid || "—"}</strong>
+            <ShieldCheck size={16} />
+          </div>
+
+          <div className="student-attendance-qr-refresh" aria-live="polite">
+            <div className="student-attendance-qr-refresh-label">
+              <span><Clock3 size={15} /> {qrIsActive ? `Refreshes in ${secondsRemaining}s` : "Refreshing code..."}</span>
+              <span><RefreshCw size={13} /> Automatic refresh</span>
+            </div>
+            <div
+              className="student-attendance-qr-progress"
+              role="progressbar"
+              aria-label="QR code time remaining"
+              aria-valuemin="0"
+              aria-valuemax="30"
+              aria-valuenow={secondsRemaining}
+            >
+              <span style={{ width: `${(secondsRemaining / 30) * 100}%` }} />
+            </div>
+          </div>
+          <p className="student-attendance-qr-note">
+            The signed code expires after 30 seconds and can only record attendance once.
+          </p>
+        </article>
+
+        <article className="student-card student-attendance-today-card">
           <div className="student-panel-header">
             <div>
-              <p className="student-panel-subtitle">Today</p>
+              <p className="student-panel-subtitle">Today · {formatDateLabel(getLocalDate())}</p>
               <h2 className="student-panel-title">Attendance Status</h2>
             </div>
-            <CheckCircle2 size={18} color="#208d67" />
+            <CalendarClock size={19} color="#2868c7" />
           </div>
-
-          <div className="student-warning-box">
-            <span>{timeInStatus && timeOutStatus ? "Your attendance was successfully recorded today." : "Please log your attendance before leaving the workplace."}</span>
-          </div>
-
-          <div className="student-summary-grid" style={{ marginTop: "18px" }}>
-            <div className="student-card student-stat-card">
-              <p className="student-stat-label">Total today</p>
-              <div className="student-stat-value">
-                <strong>{todayHours}</strong>
+          {attendanceLoading ? (
+            <p className="student-meta">Loading today’s attendance...</p>
+          ) : attendanceError ? (
+            <p className="student-attendance-qr-error" role="alert">{attendanceError}</p>
+          ) : (
+            <div className="student-attendance-today-grid">
+              <div>
+                <span>Time In</span>
+                <strong>{todaysAttendance?.timeIn || "Not recorded"}</strong>
+              </div>
+              <div>
+                <span>Time Out</span>
+                <strong>{todaysAttendance?.timeOut || "Not recorded"}</strong>
+              </div>
+              <div>
+                <span>Today’s hours</span>
+                <strong>{Number(todaysAttendance?.totalHours ?? todaysAttendance?.hours ?? 0).toFixed(2)}h</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong>{todaysAttendance?.status || "Pending"}</strong>
               </div>
             </div>
-            <div className="student-card student-stat-card">
-              <p className="student-stat-label">Accumulated</p>
-              <div className="student-stat-value">
-                <strong>{accumulatedHours}</strong>
-              </div>
-            </div>
-            <div className="student-card student-stat-card">
-              <p className="student-stat-label">Status</p>
-              <div className="student-stat-value">
-                <strong>{timeInStatus ? "Present" : "Pending"}</strong>
-              </div>
-            </div>
+          )}
+          <div className="student-attendance-accumulated">
+            <span>Total recorded hours</span>
+            <strong>{accumulatedHours.toFixed(2)}h</strong>
           </div>
-        </div>
-
-        <div className="student-card student-panel">
-          <div className="student-panel-header">
-            <div>
-              <p className="student-panel-subtitle">Summary</p>
-              <h2 className="student-panel-title">Monthly Attendance</h2>
-            </div>
-            <CalendarClock size={18} color="#2868c7" />
-          </div>
-
-          <div className="student-metric-list">
-            <div className="student-metric-item">
-              <strong>{presentCount}</strong>
-              <span className="student-meta">Present</span>
-            </div>
-            <div className="student-metric-item">
-              <strong>{absentCount}</strong>
-              <span className="student-meta">Absent</span>
-            </div>
-          </div>
-        </div>
+        </article>
       </section>
 
-      <section className="student-card student-panel" style={{ marginTop: "18px" }}>
+      <section className="student-card student-panel student-attendance-history">
         <div className="student-panel-header">
           <div>
             <p className="student-panel-subtitle">History</p>
             <h2 className="student-panel-title">Attendance Records</h2>
           </div>
-          <div className="student-field" style={{ minWidth: "220px" }}>
-            <label htmlFor="attendanceSearch" style={{ display: "none" }}>Search</label>
-            <div style={{ position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#718096" }} />
-              <input
-                id="attendanceSearch"
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by date or status"
-                style={{ paddingLeft: "32px" }}
-              />
-            </div>
-          </div>
+          <span className="student-attendance-record-count">{attendanceRecords.length} records</span>
         </div>
-
-        <table className="student-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>AM Time In</th>
-              <th>AM Time Out</th>
-              <th>PM Time In</th>
-              <th>PM Time Out</th>
-              <th>Total Hours</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRecords.length === 0 ? (
+        {attendanceError && <p className="student-attendance-qr-error" role="alert">{attendanceError}</p>}
+        <div className="student-table-wrap">
+          <table className="student-table">
+            <thead>
               <tr>
-                <td colSpan="7">
-                  <div className="student-empty-state">No attendance records match your search.</div>
-                </td>
+                <th>Date</th>
+                <th>Time In</th>
+                <th>Time Out</th>
+                <th>Total Hours</th>
+                <th>Status</th>
               </tr>
-            ) : (
-              filteredRecords.map((record) => (
-                <tr key={record.date}>
-                  <td>{formatDateLabel(record.date)}</td>
-                  <td>{record.timeInAM}</td>
-                  <td>{record.timeOutAM}</td>
-                  <td>{record.timeInPM}</td>
-                  <td>{record.timeOutPM}</td>
-                  <td>{record.totalHours}</td>
-                  <td>
-                    <span className={
-                      record.status === "Present"
-                        ? "status-badge active"
-                        : "status-badge absent"
-                    }>
-                      {record.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {attendanceLoading ? (
+                <tr><td colSpan="5">Loading attendance records...</td></tr>
+              ) : attendanceRecords.length === 0 ? (
+                <tr><td colSpan="5"><div className="student-empty-state">No attendance records have been recorded yet.</div></td></tr>
+              ) : (
+                attendanceRecords.map((record) => (
+                  <tr key={record.id}>
+                    <td>{formatDateLabel(record.date)}</td>
+                    <td>{record.timeIn || record.morningTimeIn || "—"}</td>
+                    <td>{record.timeOut || record.afternoonTimeOut || "—"}</td>
+                    <td>{Number(record.totalHours ?? record.hours ?? 0).toFixed(2)}h</td>
+                    <td>
+                      <span className={`status-badge ${record.status === "Present" ? "active" : "pending"}`}>
+                        {record.status || "Incomplete"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

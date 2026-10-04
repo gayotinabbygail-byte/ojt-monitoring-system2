@@ -1,0 +1,223 @@
+.supervisor-student-qr-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  gap: 18px;
+}
+
+.supervisor-student-qr-panel {
+  min-width: 0;
+}
+
+.supervisor-student-qr-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.supervisor-student-qr-heading h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 17px;
+}
+
+.supervisor-student-qr-heading p {
+  margin: 5px 0 0;
+  color: #8995a7;
+  font-size: 12px;
+}
+
+.supervisor-student-qr-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border-radius: 9px;
+  background: #e7f0ff;
+  color: #2868c7;
+}
+
+.supervisor-student-qr-icon.live {
+  background: #e0f6f1;
+  color: #138f7d;
+}
+
+.supervisor-student-qr-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.supervisor-student-qr-actions > span {
+  color: #718096;
+  font-size: 12px;
+}
+
+.supervisor-student-qr-reader {
+  max-width: 540px;
+  margin: 12px auto 0;
+  overflow: hidden;
+  border: 1px solid #e3e9f1;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.supervisor-student-qr-reader #reader__scan_region {
+  min-height: 290px;
+}
+
+.supervisor-student-qr-reader #reader__scan_region video {
+  border-radius: 8px;
+}
+
+.supervisor-student-qr-reader #reader__dashboard {
+  padding: 10px;
+  color: #536176;
+  font-size: 12px;
+}
+
+.supervisor-student-qr-reader #reader__dashboard_section_csr button,
+.supervisor-student-qr-reader #reader__dashboard_section_swaplink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  padding: 8px 12px;
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #2868c7;
+  font: 700 12px "Trebuchet MS", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.supervisor-student-qr-reader img[alt="Info icon"] {
+  display: none;
+}
+
+.supervisor-student-qr-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 11px 13px;
+  border: 1px solid #bfe7d8;
+  border-radius: 8px;
+  background: #effaf5;
+  color: #188265;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.supervisor-student-qr-feedback.error {
+  border-color: #f1caca;
+  background: #fff6f6;
+  color: #c24c52;
+}
+
+.supervisor-student-qr-help {
+  display: grid;
+  min-height: 280px;
+  align-content: center;
+  justify-items: center;
+  gap: 9px;
+  padding: 20px;
+  border: 1px dashed #d5deea;
+  border-radius: 10px;
+  color: #8995a7;
+  text-align: center;
+}
+
+.supervisor-student-qr-help svg {
+  color: #9eb9e8;
+}
+
+.supervisor-student-qr-help strong {
+  color: #536176;
+  font-size: 13px;
+}
+
+.supervisor-student-qr-help span {
+  max-width: 260px;
+  font-size: 11px;
+}
+
+.supervisor-student-qr-list {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.supervisor-student-qr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.supervisor-student-qr-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7f0ff;
+  color: #2868c7;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.supervisor-student-qr-row > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.supervisor-student-qr-row strong,
+.supervisor-student-qr-row > div span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervisor-student-qr-row strong {
+  color: #354257;
+  font-size: 12px;
+}
+
+.supervisor-student-qr-row > div span,
+.supervisor-student-qr-row time {
+  margin-top: 3px;
+  color: #8995a7;
+  font-size: 10px;
+}
+
+.supervisor-student-qr-row time {
+  white-space: nowrap;
+}
+
+.supervisor-student-qr-action {
+  padding: 4px 7px;
+  border-radius: 99px;
+  background: #e6f6ef;
+  color: #188265;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .supervisor-student-qr-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .supervisor-student-qr-row {
+    flex-wrap: wrap;
+  }
+}
