@@ -184,7 +184,7 @@ function Students() {
             <thead>
               <tr>
                 <th>Student</th>
-                <th>Student ID</th>
+                <th>Intern ID</th>
                 <th>Course</th>
                 <th>Partner Company</th>
                 <th>OJT Hours Progress</th>
@@ -285,7 +285,7 @@ function Students() {
           {visibleStudents.length === 0 && (
             <div className="students-empty">
               <Search size={24} />
-              <strong>No students found</strong>
+              <strong>No interns found</strong>
               <span>Try changing your search or filters.</span>
             </div>
           )}
@@ -294,7 +294,7 @@ function Students() {
         <footer className="students-footer">
           <span>
             Showing {filteredStudents.length === 0 ? 0 : (page - 1) * pageSize + 1}–
-            {Math.min(page * pageSize, filteredStudents.length)} of {filteredStudents.length} students
+            {Math.min(page * pageSize, filteredStudents.length)} of {filteredStudents.length} interns
           </span>
           <div className="student-pagination">
             <button

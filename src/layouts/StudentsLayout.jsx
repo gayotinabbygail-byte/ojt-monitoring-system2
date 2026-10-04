@@ -87,12 +87,6 @@ function StudentDashboard() {
             onClick={closeSidebarOnMobile}
           />
           <StudentNavLink
-            to="/Student/application"
-            label="My Application"
-            icon={FileUser}
-            onClick={closeSidebarOnMobile}
-          />
-          <StudentNavLink
             to="/Student/attendance"
             label="My Attendance"
             icon={ListChecks}
@@ -114,12 +108,6 @@ function StudentDashboard() {
             to="/Student/progress"
             label="Progress"
             icon={ChartCandlestick}
-            onClick={closeSidebarOnMobile}
-          />
-          <StudentNavLink
-            to="/Student/documents"
-            label="Documents"
-            icon={Summary}
             onClick={closeSidebarOnMobile}
           />
           <StudentNavLink

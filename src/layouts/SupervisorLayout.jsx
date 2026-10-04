@@ -1,18 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
-  BookOpenCheck,
-  ChartNoAxesCombined,
-  ChartCandlestick,
-  FileAxis3d,
-  FileUser,
-  Handshake,
   LayoutDashboard,
-  ListChecks,
   LogOut,
   Menu,
-  Settings,
-  Summary,
   Users,
 } from "lucide-react";
 import { logout } from "../services/authService";
@@ -90,62 +81,8 @@ function SupervisorLayout() {
           />
           <SupervisorNavLink
             to="/supervisor/students"
-            label="Students"
+            label="Student Interns"
             icon={Users}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/applications"
-            label="Applications"
-            icon={FileUser}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/partnercompanies"
-            label="OJT Supervisors"
-            icon={Handshake}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/ojtcoordinators"
-            label="OJT Coordinators"
-            icon={FileAxis3d}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/attendance"
-            label="Attendance"
-            icon={ListChecks}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/ojthours"
-            label="OJT Hours"
-            icon={BookOpenCheck}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/evaluations"
-            label="Evaluations"
-            icon={ChartCandlestick}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/reports"
-            label="OJT Reports"
-            icon={Summary}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/attendancereports"
-            label="Attendance Reports"
-            icon={ChartNoAxesCombined}
-            onClick={closeSidebarOnMobile}
-          />
-          <SupervisorNavLink
-            to="/supervisor/settings"
-            label="Settings"
-            icon={Settings}
             onClick={closeSidebarOnMobile}
           />
 

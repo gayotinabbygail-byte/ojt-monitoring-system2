@@ -39,9 +39,9 @@ const studentProfile = {
 
 const attendanceHistory = [
   { date: "Sep 18, 2026", timeIn: "08:10 AM", timeOut: "05:15 PM", total: "8h 05m", status: "Present" },
-  { date: "Sep 17, 2026", timeIn: "08:28 AM", timeOut: "05:05 PM", total: "7h 37m", status: "Late" },
+  { date: "Sep 17, 2026", timeIn: "08:28 AM", timeOut: "05:05 PM", total: "7h 37m", status: "Present" },
   { date: "Sep 16, 2026", timeIn: "08:00 AM", timeOut: "05:00 PM", total: "9h 00m", status: "Present" },
-  { date: "Sep 15, 2026", timeIn: "08:20 AM", timeOut: "04:50 PM", total: "7h 30m", status: "Late" },
+  { date: "Sep 15, 2026", timeIn: "08:20 AM", timeOut: "04:50 PM", total: "7h 30m", status: "Present" },
 ];
 
 const recentReports = [
@@ -240,8 +240,8 @@ function StudentsDashboard() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>In</th>
-                <th>Out</th>
+                <th>In (AM)</th>
+                <th>Out (PM)</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -253,7 +253,7 @@ function StudentsDashboard() {
                   <td>{record.timeOut}</td>
                   <td>
                     <span className={
-                      record.status === "Present" ? "status-badge active" : "status-badge pending"
+                      record.status === "Present" ? "status-badge active" : "status-badge absent"
                     }>
                       {record.status}
                     </span>

@@ -3,14 +3,14 @@ import { CalendarClock, CheckCircle2, Clock3, Search, TimerReset } from "lucide-
 import "../../styles/student-portal.css";
 
 const attendanceSeed = [
-  { date: "2026-09-18", timeIn: "08:10 AM", timeOut: "05:15 PM", totalHours: "8h 05m", status: "Present" },
-  { date: "2026-09-17", timeIn: "08:28 AM", timeOut: "05:05 PM", totalHours: "7h 37m", status: "Late" },
-  { date: "2026-09-16", timeIn: "08:00 AM", timeOut: "05:00 PM", totalHours: "9h 00m", status: "Present" },
-  { date: "2026-09-15", timeIn: "08:20 AM", timeOut: "04:50 PM", totalHours: "7h 30m", status: "Late" },
-  { date: "2026-09-12", timeIn: "08:10 AM", timeOut: "05:10 PM", totalHours: "8h 00m", status: "Present" },
-  { date: "2026-09-11", timeIn: "08:00 AM", timeOut: "05:00 PM", totalHours: "9h 00m", status: "Present" },
-  { date: "2026-09-10", timeIn: "---", timeOut: "---", totalHours: "0h 00m", status: "Absent" },
-  { date: "2026-09-09", timeIn: "08:05 AM", timeOut: "05:15 PM", totalHours: "8h 10m", status: "Present" },
+  { date: "2026-09-18", timeInAM: "08:10 AM", timeOutAM: "11:30 AM", timeInPM: "01:00 PM", timeOutPM: "05:15 PM", totalHours: "8h 05m", status: "Present" },
+  { date: "2026-09-17", timeInAM: "08:28 AM", timeOutAM: "11:45 AM", timeInPM: "12:30 PM", timeOutPM: "05:05 PM", totalHours: "7h 37m", status: "Present" },
+  { date: "2026-09-16", timeInAM: "08:00 AM", timeOutAM: "11:45 AM", timeInPM: "12:45 PM", timeOutPM: "05:00 PM", totalHours: "9h 00m", status: "Present" },
+  { date: "2026-09-15", timeInAM: "08:20 AM", timeOutAM: "11:35 AM", timeInPM: "12:50 PM", timeOutPM: "04:50 PM", totalHours: "7h 30m", status: "Present" },
+  { date: "2026-09-12", timeInAM: "08:10 AM", timeOutAM: "11:40 AM", timeInPM: "12:45 PM", timeOutPM: "05:10 PM", totalHours: "8h 00m", status: "Present" },
+  { date: "2026-09-11", timeInAM: "08:00 AM", timeOutAM: "11:30 AM", timeInPM: "12:30 PM", timeOutPM: "05:00 PM", totalHours: "9h 00m", status: "Present" },
+  { date: "2026-09-10", timeInAM: "---", timeOutAM: "---", timeInPM: "---", timeOutPM: "---", totalHours: "0h 00m", status: "Absent" },
+  { date: "2026-09-09", timeInAM: "08:05 AM", timeOutAM: "11:50 AM", timeInPM: "12:45 PM", timeOutPM: "05:15 PM", totalHours: "8h 10m", status: "Present" },
 ];
 
 const formatDateLabel = (value) =>
@@ -33,7 +33,6 @@ function Attendance() {
   }, [search]);
 
   const presentCount = attendanceSeed.filter((item) => item.status === "Present").length;
-  const lateCount = attendanceSeed.filter((item) => item.status === "Late").length;
   const absentCount = attendanceSeed.filter((item) => item.status === "Absent").length;
   const todayHours = "8h 05m";
   const accumulatedHours = "320h 00m";
@@ -69,14 +68,14 @@ function Attendance() {
           </div>
         </div>
         <div className="student-card student-stat-card">
-          <p className="student-stat-label">Time In</p>
+          <p className="student-stat-label">AM Time In</p>
           <div className="student-stat-value">
             <strong>{timeInStatus ? "08:10 AM" : "Not yet"}</strong>
             <span className="student-stat-trend neutral">Status</span>
           </div>
         </div>
         <div className="student-card student-stat-card">
-          <p className="student-stat-label">Time Out</p>
+          <p className="student-stat-label">PM Time Out</p>
           <div className="student-stat-value">
             <strong>{timeOutStatus ? "05:15 PM" : "Pending"}</strong>
             <span className="student-stat-trend neutral">Status</span>
@@ -145,10 +144,6 @@ function Attendance() {
               <strong>{absentCount}</strong>
               <span className="student-meta">Absent</span>
             </div>
-            <div className="student-metric-item">
-              <strong>{lateCount}</strong>
-              <span className="student-meta">Late</span>
-            </div>
           </div>
         </div>
       </section>
@@ -179,8 +174,10 @@ function Attendance() {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Time In</th>
-              <th>Time Out</th>
+              <th>AM Time In</th>
+              <th>AM Time Out</th>
+              <th>PM Time In</th>
+              <th>PM Time Out</th>
               <th>Total Hours</th>
               <th>Status</th>
             </tr>
@@ -188,7 +185,7 @@ function Attendance() {
           <tbody>
             {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan="5">
+                <td colSpan="7">
                   <div className="student-empty-state">No attendance records match your search.</div>
                 </td>
               </tr>
@@ -196,16 +193,16 @@ function Attendance() {
               filteredRecords.map((record) => (
                 <tr key={record.date}>
                   <td>{formatDateLabel(record.date)}</td>
-                  <td>{record.timeIn}</td>
-                  <td>{record.timeOut}</td>
+                  <td>{record.timeInAM}</td>
+                  <td>{record.timeOutAM}</td>
+                  <td>{record.timeInPM}</td>
+                  <td>{record.timeOutPM}</td>
                   <td>{record.totalHours}</td>
                   <td>
                     <span className={
                       record.status === "Present"
                         ? "status-badge active"
-                        : record.status === "Late"
-                          ? "status-badge pending"
-                          : "status-badge absent"
+                        : "status-badge absent"
                     }>
                       {record.status}
                     </span>
