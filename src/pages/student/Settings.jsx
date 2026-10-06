@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Mail, ShieldCheck, BellRing } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 import "../../styles/student-portal.css";
 
 const defaultSettings = {

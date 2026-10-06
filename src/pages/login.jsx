@@ -27,23 +27,25 @@ function Login() {
 
     try {
       const userCredential = await login(email, password);
+      const sessionUser = userCredential?.user || userCredential;
+      const profile = sessionUser?.role
+        ? sessionUser
+        : await getUserData(sessionUser?.uid);
 
-      const userData = await getUserData(userCredential.user.uid);
-
-      if (!userData) {
+      if (!profile) {
         alert("User profile not found.");
         return;
       }
 
-      if (userData.role === "admin") {
+      if (profile.role === "admin") {
         navigate("/admin");
-      } else if (userData.role === "client") {
+      } else if (profile.role === "client") {
         navigate("/client");
-      } else if (userData.role === "coordinator") {
+      } else if (profile.role === "coordinator") {
         navigate("/coordinator");
-      } else if (userData.role === "student") {
+      } else if (profile.role === "student") {
         navigate("/Student");
-      } else if (userData.role === "supervisor") {
+      } else if (profile.role === "supervisor") {
         navigate("/supervisor");
       } else {
         alert("Invalid user role.");

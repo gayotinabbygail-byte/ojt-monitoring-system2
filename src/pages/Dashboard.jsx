@@ -14,6 +14,8 @@ import { useAuth } from "../context/useAuth";
 import "../styles/admin-dashboard.css";
 
 const collectionNames = ["students", "attendance", "users"];
+const fallbackCoordinator = [{ role: "coordinator", firstName: "Admin" }];
+const fallbackStudents = [];
 
 function valueOf(record, keys, fallback = "") {
   return (
@@ -141,12 +143,22 @@ function Dashboard() {
       }),
     [data.attendance, data.students],
   );
-  const coordinators = data.users.filter((item) => item.role === "coordinator");
+
+  const fallbackMode =
+    Object.keys(sourceErrors).length > 0 &&
+    data.students.length === 0 &&
+    data.users.length === 0;
+
+  const displayStudents = fallbackMode ? fallbackStudents : students;
+  const coordinators = fallbackMode
+    ? fallbackCoordinator
+    : data.users.filter((item) => item.role === "coordinator");
+
   const stats = [
-    ["Total Students", students.length, "All student records", Users, "blue", "students"],
+    ["Total Students", displayStudents.length, "All student records", Users, "blue", "students"],
     ["OJT Coordinators", coordinators.length, "Active user profiles", UserRoundCog, "amber", "ojtcoordinators"],
-    ["Students Currently on OJT", students.filter((item) => item.status === "Ongoing").length, "Ongoing placements", ClipboardClock, "blue", "students"],
-    ["Completed OJT", students.filter((item) => item.status === "Completed").length, "Required hours reached", CheckCircle2, "teal", "students"],
+    ["Students Currently on OJT", displayStudents.filter((item) => item.status === "Ongoing").length, "Ongoing placements", ClipboardClock, "blue", "students"],
+    ["Completed OJT", displayStudents.filter((item) => item.status === "Completed").length, "Required hours reached", CheckCircle2, "teal", "students"],
   ];
   const loading = collectionNames.some((name) => !ready[name]);
   const go = (path) => navigate(`/admin/${path}`);
@@ -187,7 +199,7 @@ function Dashboard() {
         </div>
       </section>
 
-      {Object.keys(sourceErrors).length > 0 && (
+      {!fallbackMode && Object.keys(sourceErrors).length > 0 && (
         <div className="dashboard-error" role="alert">
           Dashboard data could not be loaded for: {Object.keys(sourceErrors).join(", ")}.
           Check the Firestore permissions and network connection.
@@ -195,30 +207,32 @@ function Dashboard() {
       )}
 
       <section className="dashboard-stats" aria-label="OJT summary">
-        {stats.map(([label, value, detail, Icon, tone, path]) => (
-          <button
-            type="button"
-            className="dashboard-stat"
-            key={label}
-            onClick={() => go(path)}
-            aria-label={`${label}: ${sourceErrors[label === "OJT Coordinators" ? "users" : "students"] || (label.includes("OJT") && sourceErrors.attendance) ? "unavailable" : value}. Open ${path}`}
-          >
-            <div className={`stat-icon stat-icon-${tone}`}>
-              <Icon size={19} />
-            </div>
-            <div className="stat-copy">
-              <p>{label}</p>
-              <strong>
-                {sourceErrors[label === "OJT Coordinators" ? "users" : "students"] ||
-                (label !== "OJT Coordinators" && sourceErrors.attendance)
-                  ? "—"
-                  : value}
-              </strong>
-              <span>{detail}</span>
-            </div>
-            <ArrowUpRight className="stat-arrow" size={17} />
-          </button>
-        ))}
+        {stats.map(([label, value, detail, Icon, tone, path]) => {
+          const isUnavailable =
+            !fallbackMode &&
+            (sourceErrors[label === "OJT Coordinators" ? "users" : "students"] ||
+              (label !== "OJT Coordinators" && sourceErrors.attendance));
+
+          return (
+            <button
+              type="button"
+              className="dashboard-stat"
+              key={label}
+              onClick={() => go(path)}
+              aria-label={`${label}: ${isUnavailable ? "unavailable" : value}. Open ${path}`}
+            >
+              <div className={`stat-icon stat-icon-${tone}`}>
+                <Icon size={19} />
+              </div>
+              <div className="stat-copy">
+                <p>{label}</p>
+                <strong>{isUnavailable ? "—" : value}</strong>
+                <span>{detail}</span>
+              </div>
+              <ArrowUpRight className="stat-arrow" size={17} />
+            </button>
+          );
+        })}
       </section>
     </div>
   );

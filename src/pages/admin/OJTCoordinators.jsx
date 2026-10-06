@@ -14,14 +14,15 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { COURSES } from "../../constants/courses";
 
 const initialCoordinators = [
   { id: "COORD-001", name: "Dr. Maria Lourdes Santos", department: "Bachelor of Science in Information Technology", email: "mlsantos@lccian.edu.ph", phone: "0917 555 1001", students: 28, companies: 7, status: "Active", activity: "Reviewed 6 applications today" },
   { id: "COORD-002", name: "Ms. Patricia Anne Lim", department: "Bachelor of Science in Business Administration Major in Financial Management", email: "palim@lccian.edu.ph", phone: "0917 555 1002", students: 24, companies: 5, status: "Active", activity: "Updated 12 attendance records" },
   { id: "COORD-003", name: "Mr. Ramon Villanueva", department: "Bachelor of Science in Business Administration Major in Marketing Management", email: "rvillanueva@lccian.edu.ph", phone: "0917 555 1003", students: 19, companies: 4, status: "On Leave", activity: "Last active 2 days ago" },
-  { id: "COORD-004", name: "Ms. Lara Mendoza", department: "Education", email: "lmendoza@lccian.edu.ph", phone: "0917 555 1004", students: 31, companies: 8, status: "Active", activity: "Completed 4 student evaluations" },
+  { id: "COORD-004", name: "Ms. Lara Mendoza", department: "Bachelor of Science in Secondary Education", email: "lmendoza@lccian.edu.ph", phone: "0917 555 1004", students: 31, companies: 8, status: "Active", activity: "Completed 4 student evaluations" },
   { id: "COORD-005", name: "Mr. Daniel Reyes", department: "Bachelor of Science in Hospitality Management", email: "dreyes@lccian.edu.ph", phone: "0917 555 1005", students: 16, companies: 3, status: "Active", activity: "Added a new partner company" },
-  { id: "COORD-006", name: "Ms. Beatriz Navarro", department: "General Studies", email: "bnavarro@lccian.edu.ph", phone: "0917 555 1006", students: 12, companies: 3, status: "Inactive", activity: "No recent activity" },
+  { id: "COORD-006", name: "Ms. Beatriz Navarro", department: "Bachelor of Science in Elementary Education", email: "bnavarro@lccian.edu.ph", phone: "0917 555 1006", students: 12, companies: 3, status: "Inactive", activity: "No recent activity" },
   { id: "COORD-007", name: "Mr. Nestor Santos", department: "Bachelor of Science in Information Technology", email: "nsantos@lccian.edu.ph", phone: "0917 555 1007", students: 22, companies: 6, status: "Active", activity: "Submitted weekly OJT report" },
 ];
 
@@ -39,7 +40,7 @@ function OJTCoordinators() {
   const [notice, setNotice] = useState("");
   const pageSize = 5;
 
-  const departments = [...new Set(coordinators.map((coordinator) => coordinator.department))];
+  const departments = [...new Set([...COURSES, ...coordinators.map((coordinator) => coordinator.department)])];
   const filteredCoordinators = useMemo(() => coordinators.filter((coordinator) => {
     const query = searchTerm.toLowerCase().trim();
     const matchesSearch = !query || `${coordinator.name} ${coordinator.id} ${coordinator.department}`.toLowerCase().includes(query);

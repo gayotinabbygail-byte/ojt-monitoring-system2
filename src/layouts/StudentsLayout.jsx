@@ -8,7 +8,6 @@ import {
   Summary,
   Settings,
   Menu,
-  LogOut,
 } from "lucide-react";
 import { logout } from "../services/authService";
 import { useAuth } from "../context/useAuth";

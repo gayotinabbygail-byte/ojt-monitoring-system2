@@ -1,4 +1,4 @@
-import { Download, Eye, FileCheck2, Plus, Replace, Trash2, Upload } from "lucide-react";
+import { Eye, Plus, Trash2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import "../../styles/student-portal.css";
 
