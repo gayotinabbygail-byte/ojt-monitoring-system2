@@ -7,11 +7,7 @@ import { useState } from "react";
 import {
   LayoutDashboard,
   BookOpen,
-  FileUser,
-  Handshake,
   FileAxis3d,
-  Summary,
-  ListCheck,
   Settings,
   Menu,
   LogOut,
@@ -113,22 +109,6 @@ function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to={`${basePath}/application`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Applications"
-          >
-            <span className="nav-icon">
-              <FileUser size={18} />
-            </span>
-
-            <span className="nav-text">Applications</span>
-          </NavLink>
-
-          <NavLink
             to={`${basePath}/students`}
             end
             onClick={closeSidebarOnMobile}
@@ -142,22 +122,6 @@ function AdminLayout() {
             </span>
 
             <span className="nav-text">Students</span>
-          </NavLink>
-
-          <NavLink
-            to={`${basePath}/partnercompanies`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="OJT Supervisors"
-          >
-            <span className="nav-icon">
-              <Handshake size={18} />
-            </span>
-
-            <span className="nav-text">OJT Supervisors</span>
           </NavLink>
 
           {user?.role === "admin" && (
@@ -177,38 +141,6 @@ function AdminLayout() {
               <span className="nav-text">OJT Coordinators</span>
             </NavLink>
           )}
-
-          <NavLink
-            to={`${basePath}/ojtreports`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Ojt Reports"
-          >
-            <span className="nav-icon">
-              <Summary size={18} />
-            </span>
-
-            <span className="nav-text">OJT Reports</span>
-          </NavLink>
-
-          <NavLink
-            to={`${basePath}/attendancereports`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Attendance Reports"
-          >
-            <span className="nav-icon">
-              <ListCheck size={18} />
-            </span>
-
-            <span className="nav-text">Attendance Reports</span>
-          </NavLink>
 
           <NavLink
             to={`${basePath}/settings`}

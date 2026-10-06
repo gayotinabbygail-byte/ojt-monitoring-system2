@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { COURSES } from "../../constants/courses";
+import "./Students.css";
 
 const initialStudents = [
   { id: "STU-2023-0184", name: "Maria Santos", course: "Bachelor of Science in Information Technology", company: "Isabela Tech Solutions", hours: 320, target: 486, status: "DEPLOYED", email: "maria.santos@lccian.edu.ph", phone: "0917 555 0184" },
@@ -184,10 +185,8 @@ function Students() {
             <thead>
               <tr>
                 <th>Student</th>
-                <th>Intern ID</th>
+                <th>Student ID</th>
                 <th>Course</th>
-                <th>Partner Company</th>
-                <th>OJT Hours Progress</th>
                 <th>Status</th>
                 <th>
                   <span className="sr-only">Actions</span>
@@ -195,90 +194,64 @@ function Students() {
               </tr>
             </thead>
             <tbody>
-              {visibleStudents.map((student, index) => {
-                const progress = Math.min(
-                  100,
-                  Math.round((student.hours / student.target) * 100),
-                );
-
-                return (
-                  <tr key={student.id}>
-                    <td>
-                      <div className="student-profile">
-                        <span className={`student-avatar ${avatarColors[index % avatarColors.length]}`}>
-                          {student.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("")}
-                        </span>
-                        <div>
-                          <strong>{student.name}</strong>
-                          <span>{student.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="student-id">{student.id}</span>
-                    </td>
-                    <td>{student.course}</td>
-                    <td>
-                      <span className="student-company">{student.company}</span>
-                    </td>
-                    <td>
-                      <div className="hours-cell">
-                        <div className="hours-label">
-                          <span>
-                            {student.hours} / {student.target}
-                          </span>
-                          <strong>{progress}%</strong>
-                        </div>
-                        <div className="hours-track">
-                          <div
-                            className={`hours-fill ${progress >= 100 ? "complete" : ""}`}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`student-status ${statusClass[student.status]}`}>
-                        {student.status}
+              {visibleStudents.map((student, index) => (
+                <tr key={student.id}>
+                  <td>
+                    <div className="student-profile">
+                      <span className={`student-avatar ${avatarColors[index % avatarColors.length]}`}>
+                        {student.name
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("")}
                       </span>
-                    </td>
-                    <td>
-                      <div className="student-actions">
-                        <button
-                          type="button"
-                          className="student-action"
-                          title="View student"
-                          aria-label={`View ${student.name}`}
-                          onClick={() => setSelectedStudent(student)}
-                        >
-                          <Eye size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="student-action"
-                          title="Edit student"
-                          aria-label={`Edit ${student.name}`}
-                          onClick={() => showNotice(`Editing ${student.id} is ready to connect.`)}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="student-action delete"
-                          title="Delete student"
-                          aria-label={`Delete ${student.name}`}
-                          onClick={() => deleteStudent(student)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                      <div>
+                        <strong>{student.name}</strong>
+                        <span>{student.email}</span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  <td>
+                    <span className="student-id">{student.id}</span>
+                  </td>
+                  <td>{student.course}</td>
+                  <td>
+                    <span className={`student-status ${statusClass[student.status]}`}>
+                      {student.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="student-actions">
+                      <button
+                        type="button"
+                        className="student-action"
+                        title="View student"
+                        aria-label={`View ${student.name}`}
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="student-action"
+                        title="Edit student"
+                        aria-label={`Edit ${student.name}`}
+                        onClick={() => showNotice(`Editing ${student.id} is ready to connect.`)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="student-action delete"
+                        title="Delete student"
+                        aria-label={`Delete ${student.name}`}
+                        onClick={() => deleteStudent(student)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
