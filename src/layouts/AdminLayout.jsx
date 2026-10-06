@@ -137,7 +137,6 @@ function AdminLayout() {
               <span className="nav-icon">
                 <FileAxis3d size={18} />
               </span>
-
               <span className="nav-text">OJT Coordinators</span>
             </NavLink>
           )}
