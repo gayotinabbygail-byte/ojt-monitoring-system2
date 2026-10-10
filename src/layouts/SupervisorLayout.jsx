@@ -2,7 +2,6 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
   LayoutDashboard,
-  LogOut,
   Menu,
   QrCode,
   ClipboardList,
@@ -100,17 +99,6 @@ function SupervisorLayout() {
             onClick={closeSidebarOnMobile}
           />
 
-          <button
-            type="button"
-            className="nav-link sidebar-logout"
-            onClick={handleLogout}
-            title="Logout"
-          >
-            <span className="nav-icon">
-              <LogOut size={18} />
-            </span>
-            <span className="nav-text">Logout</span>
-          </button>
         </aside>
 
         {sidebarOpen && (

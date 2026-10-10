@@ -1,16 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowRight, Building2, CheckCircle2, ClipboardCheck, FileText, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Building2, CheckCircle2, ClipboardCheck, Users } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { db } from "../../services/firebase";
 import "../../styles/coordinatordashboard.css";
 
-const sources = ["students", "applications", "attendance", "partnerCompanies"];
-
-function displayValue(record, keys, fallback = "") {
-  return keys.map((key) => record[key]).find((value) => value !== undefined && value !== null && value !== "") ?? fallback;
-}
+const sources = ["students", "attendance", "partnerCompanies"];
 
 function CoordinatorDashboard() {
   const { user } = useAuth();
@@ -37,14 +33,10 @@ function CoordinatorDashboard() {
   }, []);
 
   const students = data.students;
-  const applications = data.applications;
   const attendance = data.attendance;
-  const pendingApplications = applications.filter((item) => String(item.status || "").toLowerCase() === "pending");
   const attendanceIssues = attendance.filter((item) => ["absent", "late", "incomplete"].includes(String(item.status || "").toLowerCase()));
-  const recentApplications = useMemo(() => [...applications].slice(-5).reverse(), [applications]);
   const stats = [
     ["Assigned Students", students.length, Users, "students"],
-    ["Pending Applications", pendingApplications.length, FileText, "application"],
     ["Attendance Issues", attendanceIssues.length, AlertTriangle, "attendancereports"],
     ["OJT Supervisors", data.partnerCompanies.length, Building2, "partnercompanies"],
   ];
@@ -69,13 +61,11 @@ function CoordinatorDashboard() {
       </section>
 
       <section className="coordinator-dashboard-grid">
-        <article className="coordinator-panel"><div className="coordinator-panel-heading"><h2>Pending applications</h2><button type="button" onClick={() => navigate("/coordinator/application")}>View all <ArrowRight size={15} /></button></div>{pendingApplications.length === 0 ? <p className="coordinator-empty">No pending applications.</p> : <div className="coordinator-list">{pendingApplications.slice(0, 5).map((item) => <div className="coordinator-list-item" key={item.id}><div><strong>{displayValue(item, ["studentName", "student", "name"], "Unnamed student")}</strong><span>{displayValue(item, ["company", "partnerCompany", "companyName"], "Company not assigned")}</span></div><span className="coordinator-status pending">Pending</span></div>)}</div>}</article>
         <article className="coordinator-panel"><div className="coordinator-panel-heading"><h2>Attendance attention</h2><button type="button" onClick={() => navigate("/coordinator/attendancereports")}>Review <ArrowRight size={15} /></button></div>{attendanceIssues.length === 0 ? <p className="coordinator-empty"><CheckCircle2 size={18} /> No attendance issues.</p> : <div className="coordinator-attention"><strong>{attendanceIssues.length}</strong><span>records need review</span><p>Late, absent, or incomplete attendance entries are waiting for your attention.</p></div>}</article>
       </section>
 
-      <section className="coordinator-panel coordinator-quick-actions"><h2>Quick actions</h2><div><button type="button" onClick={() => navigate("/coordinator/students")}>View students</button><button type="button" onClick={() => navigate("/coordinator/application")}>Review applications</button><button type="button" onClick={() => navigate("/coordinator/ojtreports")}>Open OJT reports</button></div></section>
+      <section className="coordinator-panel coordinator-quick-actions"><h2>Quick actions</h2><div><button type="button" onClick={() => navigate("/coordinator/students")}>View students</button><button type="button" onClick={() => navigate("/coordinator/ojtreports")}>Open OJT reports</button></div></section>
       <p className="coordinator-dashboard-note">Monitoring data is shared with the OJT management team.</p>
-      {recentApplications.length > 0 && <span className="sr-only">{recentApplications.length} recent applications loaded.</span>}
     </main>
   );
 }
