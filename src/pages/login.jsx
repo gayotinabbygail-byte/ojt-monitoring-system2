@@ -1,11 +1,11 @@
-import "../styles/Login.css";
-import { useState } from "react";
+import "../styles/login.css";
+import schoolLogo from "../assets/school-logo.png";
+import { useState, useEffect } from "react";
 import { login } from "../services/authService";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import { getUserData } from "../services/userService";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 function Login() {
   const { user } = useAuth();
@@ -91,25 +91,15 @@ function Login() {
 
   return (
     <div className="login-container">
-      <div className="login-story">
-        <div className="login-mark" aria-label="LCCI">
-          LCCI
+      <div className="login-panel">
+        <div className="login-badge" aria-label="University logo">
+          <img src={schoolLogo} alt="La Consolacion College logo" />
         </div>
-        <p className="login-overline">LCCI · OJT MONITORING</p>
-        <h1>Make every placement count.</h1>
-        <p className="login-story-copy">
-          A clearer view of students, partners, attendance, and progress, all in
-          one place.
-        </p>
-        <div className="login-story-line">
-          <span /> Built for better coordination
-        </div>
-      </div>
 
-      <div className="login-card">
-        <p className="login-card-kicker">Welcome back</p>
-        <h2>Sign in to your workspace</h2>
-        <p className="login-card-copy">Use your LCCI account to continue.</p>
+        <div className="login-brand">
+          <h3>La Consolacion College-Isabela</h3>
+          <span>OJT Monitoring System</span>
+        </div>
 
         <form onSubmit={handleLogin}>
           <div className="input-group">
@@ -137,7 +127,6 @@ function Login() {
                 type="button"
                 className="password-toggle"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                title={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword((current) => !current)}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -152,8 +141,7 @@ function Login() {
           )}
 
           <button type="submit" className="login-submit-button">
-            Continue
-            <ArrowRight size={17} />
+            Login
           </button>
         </form>
       </div>
