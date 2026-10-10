@@ -2,10 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowRight,
   ArrowUpRight,
   CalendarDays,
   CheckCircle2,
   ClipboardClock,
+  FileText,
+  Settings,
+  UserRound,
   UserRoundCog,
   Users,
 } from "lucide-react";
@@ -14,8 +18,6 @@ import { useAuth } from "../context/useAuth";
 import "../styles/admin-dashboard.css";
 
 const collectionNames = ["students", "attendance", "users"];
-const fallbackCoordinator = [{ role: "coordinator", firstName: "Admin" }];
-const fallbackStudents = [];
 
 function valueOf(record, keys, fallback = "") {
   return (
@@ -144,24 +146,30 @@ function Dashboard() {
     [data.attendance, data.students],
   );
 
-  const fallbackMode =
-    Object.keys(sourceErrors).length > 0 &&
-    data.students.length === 0 &&
-    data.users.length === 0;
-
-  const displayStudents = fallbackMode ? fallbackStudents : students;
-  const coordinators = fallbackMode
-    ? fallbackCoordinator
-    : data.users.filter((item) => item.role === "coordinator");
+  const hasSourceErrors = Object.keys(sourceErrors).length > 0;
+  const coordinators = data.users;
+  const completedStudents = students.filter(
+    (student) => student.status === "Completed",
+  );
+  const ongoingStudents = students.filter(
+    (student) => student.status === "Ongoing",
+  );
+  const pendingStudents = students.filter(
+    (student) => student.status === "Pending",
+  );
+  const completedPercent = students.length
+    ? Math.round((completedStudents.length / students.length) * 100)
+    : 0;
 
   const stats = [
-    ["Total Students", displayStudents.length, "All student records", Users, "blue", "students"],
-    ["OJT Coordinators", coordinators.length, "Active user profiles", UserRoundCog, "amber", "ojtcoordinators"],
-    ["Students Currently on OJT", displayStudents.filter((item) => item.status === "Ongoing").length, "Ongoing placements", ClipboardClock, "blue", "students"],
-    ["Completed OJT", displayStudents.filter((item) => item.status === "Completed").length, "Required hours reached", CheckCircle2, "teal", "students"],
+    ["Total Students", students.length, "All student records", Users, "blue", "students"],
+    ["OJT Coordinators", coordinators.length, "Coordinator profiles", UserRoundCog, "amber", "ojtcoordinators"],
+    ["Students Currently on OJT", ongoingStudents.length, "Ongoing placements", ClipboardClock, "blue", "students"],
+    ["Completed OJT", completedStudents.length, "Required hours reached", CheckCircle2, "teal", "students"],
   ];
   const loading = collectionNames.some((name) => !ready[name]);
   const go = (path) => navigate(`/admin/${path}`);
+  const attentionStudents = pendingStudents.slice(0, 5);
 
   if (user?.role !== "admin") {
     return (
@@ -183,13 +191,14 @@ function Dashboard() {
     <div className="admin-dashboard">
       <section className="dashboard-intro">
         <div>
-          <p className="dashboard-eyebrow">LCCI · OJT MONITORING SYSTEM</p>
+          <p className="dashboard-eyebrow">LCCI · OJT monitoring system</p>
           <h1>Admin Dashboard</h1>
           <p className="dashboard-subtitle">
-            Welcome back, {user?.firstName || user?.email || "Admin"}! Here is your latest placement overview.
+            Welcome back, {user?.firstName || user?.email || "Admin"}. Here is
+            your live placement overview.
           </p>
         </div>
-        <div className="dashboard-date-button">
+        <div className="dashboard-date-button" aria-label="Today's date">
           <CalendarDays size={16} />
           {new Date().toLocaleDateString("en-US", {
             month: "long",
@@ -199,19 +208,19 @@ function Dashboard() {
         </div>
       </section>
 
-      {!fallbackMode && Object.keys(sourceErrors).length > 0 && (
+      {hasSourceErrors && (
         <div className="dashboard-error" role="alert">
-          Dashboard data could not be loaded for: {Object.keys(sourceErrors).join(", ")}.
-          Check the Firestore permissions and network connection.
+          Some dashboard data is unavailable ({Object.keys(sourceErrors).join(", ")}).
+          Check the connection or permissions. Available figures may be partial.
         </div>
       )}
 
       <section className="dashboard-stats" aria-label="OJT summary">
         {stats.map(([label, value, detail, Icon, tone, path]) => {
-          const isUnavailable =
-            !fallbackMode &&
-            (sourceErrors[label === "OJT Coordinators" ? "users" : "students"] ||
-              (label !== "OJT Coordinators" && sourceErrors.attendance));
+          const isUnavailable = Boolean(
+            sourceErrors[label === "OJT Coordinators" ? "users" : "students"] ||
+              (label !== "OJT Coordinators" && sourceErrors.attendance),
+          );
 
           return (
             <button
@@ -226,13 +235,171 @@ function Dashboard() {
               </div>
               <div className="stat-copy">
                 <p>{label}</p>
-                <strong>{isUnavailable ? "—" : value}</strong>
+                <strong>{isUnavailable ? "—" : value.toLocaleString()}</strong>
                 <span>{detail}</span>
               </div>
               <ArrowUpRight className="stat-arrow" size={17} />
             </button>
           );
         })}
+      </section>
+
+      <section className="dashboard-overview-grid" aria-label="Placement overview">
+        <article className="dashboard-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="panel-kicker">Student progress</p>
+              <h2>OJT placement overview</h2>
+            </div>
+            <ClipboardClock size={20} aria-hidden="true" />
+          </div>
+          {sourceErrors.students || sourceErrors.attendance ? (
+            <p className="dashboard-panel-message">
+              Progress data is unavailable until student and attendance records
+              load.
+            </p>
+          ) : (
+            <>
+              <div className="progress-layout">
+                <div
+                  className="progress-ring"
+                  style={{ "--progress": `${completedPercent}%` }}
+                  role="img"
+                  aria-label={`${completedPercent}% of students have completed OJT`}
+                >
+                  <div>
+                    <strong>{completedPercent}%</strong>
+                    <span>completed</span>
+                  </div>
+                </div>
+                <div className="progress-legend">
+                  <div>
+                    <span className="legend-dot legend-blue" />
+                    <p>Currently on OJT <strong>{ongoingStudents.length}</strong></p>
+                  </div>
+                  <div>
+                    <span className="legend-dot legend-teal" />
+                    <p>Completed <strong>{completedStudents.length}</strong></p>
+                  </div>
+                  <div>
+                    <span className="legend-dot legend-muted" />
+                    <p>Not yet deployed <strong>{pendingStudents.length}</strong></p>
+                  </div>
+                </div>
+              </div>
+              <p className="progress-footnote">
+                Based on {students.length.toLocaleString()} student
+                {students.length === 1 ? "" : "s"} with records.
+              </p>
+            </>
+          )}
+        </article>
+
+        <article className="dashboard-panel dashboard-attention-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="panel-kicker">Follow-up</p>
+              <h2>Students not yet deployed</h2>
+            </div>
+            <span className="attention-count">
+              {sourceErrors.students ? "—" : pendingStudents.length}
+            </span>
+          </div>
+          {sourceErrors.students ? (
+            <p className="dashboard-panel-message">
+              Student records could not be loaded.
+            </p>
+          ) : attentionStudents.length ? (
+            <div className="attention-list">
+              {attentionStudents.map((student) => {
+                const name = valueOf(
+                  student,
+                  ["name", "fullName", "studentName"],
+                  `${student.firstName || ""} ${student.lastName || ""}`.trim() ||
+                    "Unnamed student",
+                );
+                const identifier = valueOf(
+                  student,
+                  ["studentId", "studentID", "idNumber"],
+                  student.id,
+                );
+
+                return (
+                  <div className="attention-item" key={student.id}>
+                    <div className="attention-student">
+                      <span className="attention-avatar" aria-hidden="true">
+                        <UserRound size={16} />
+                      </span>
+                      <div>
+                        <strong title={name}>{name}</strong>
+                        <p title={identifier}>{identifier}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => go("students")}
+                      aria-label={`View ${name} in student records`}
+                    >
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="dashboard-empty">
+              {students.length
+                ? "All students have an active or completed placement."
+                : "No student records yet."}
+            </p>
+          )}
+          <button
+            type="button"
+            className="dashboard-panel-link"
+            onClick={() => go("students")}
+          >
+            View all students <ArrowRight size={15} />
+          </button>
+        </article>
+      </section>
+
+      <section className="dashboard-panel dashboard-actions-panel">
+        <div className="panel-heading">
+          <div>
+            <p className="panel-kicker">Quick access</p>
+            <h2>Admin tools</h2>
+          </div>
+        </div>
+        <div className="dashboard-actions">
+          <button
+            type="button"
+            className="dashboard-action"
+            onClick={() => go("students")}
+          >
+            <Users size={16} /> Manage students
+          </button>
+          <button
+            type="button"
+            className="dashboard-action"
+            onClick={() => go("ojtcoordinators")}
+          >
+            <UserRoundCog size={16} /> Manage coordinators
+          </button>
+          <button
+            type="button"
+            className="dashboard-action"
+            onClick={() => go("reports-dashboard")}
+          >
+            <FileText size={16} /> View reports
+          </button>
+          <button
+            type="button"
+            className="dashboard-action"
+            onClick={() => go("settings")}
+          >
+            <Settings size={16} /> Settings
+          </button>
+        </div>
       </section>
     </div>
   );
