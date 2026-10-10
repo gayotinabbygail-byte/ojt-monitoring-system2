@@ -1,16 +1,95 @@
-import { lazy, Suspense, useCallback, useState } from "react";
-import { Camera, CameraOff, CheckCircle2, Clock3, QrCode, ScanLine } from "lucide-react";
-import { scanStudentAttendanceQr } from "../../services/attendanceQrService";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import {
+  AlertCircle,
+  CalendarDays,
+  Camera,
+  CameraOff,
+  CheckCircle2,
+  ClipboardCheck,
+  Clock3,
+  QrCode,
+  ScanLine,
+} from "lucide-react";
+import { db } from "../../services/firebase";
+import {
+  recordManualStudentAttendance,
+  scanStudentAttendanceQr,
+} from "../../services/attendanceQrService";
 import { PageHeader } from "./SupervisorComponents";
 import "../../styles/supervisor-student-qr.css";
 
 const SupervisorStudentQrScanner = lazy(() => import("./SupervisorStudentQrScanner"));
 
+const attendancePeriods = [
+  { value: "amIn", label: "AM / IN" },
+  { value: "amOut", label: "AM / OUT" },
+  { value: "pmIn", label: "PM / IN" },
+  { value: "pmOut", label: "PM / OUT" },
+];
+
+function getLocalDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function studentIdOf(student) {
+  return String(
+    student.studentId ||
+      student.studentID ||
+      student.idNumber ||
+      student.id ||
+      "",
+  );
+}
+
+function studentNameOf(student) {
+  return (
+    student.name ||
+    student.fullName ||
+    student.studentName ||
+    `${student.firstName || ""} ${student.lastName || ""}`.trim() ||
+    student.email ||
+    "Unnamed student"
+  );
+}
+
 function ScanStudentQR() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [recentScans, setRecentScans] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [manualFeedback, setManualFeedback] = useState(null);
+  const [studentId, setStudentId] = useState("");
+  const [manualDate, setManualDate] = useState(getLocalDate);
+  const [period, setPeriod] = useState("amIn");
+  const [time, setTime] = useState("");
+  const [savingManual, setSavingManual] = useState(false);
+
+  useEffect(() => {
+    return onSnapshot(
+      collection(db, "students"),
+      (snapshot) => {
+        setStudents(
+          snapshot.docs.map((item) => ({ id: item.id, ...item.data() })),
+        );
+        setStudentsLoading(false);
+      },
+      (snapshotError) => {
+        console.error("Unable to load students for manual attendance:", snapshotError);
+        setStudentsLoading(false);
+        setManualFeedback({
+          type: "error",
+          text: "Student records could not be loaded. Check Firestore permissions.",
+        });
+      },
+    );
+  }, []);
 
   const handleScan = useCallback(async (token) => {
     setScannerOpen(false);
@@ -19,15 +98,6 @@ function ScanStudentQR() {
 
     try {
       const result = await scanStudentAttendanceQr(token);
-      const scan = {
-        id: `${result.studentId}-${Date.now()}`,
-        studentId: result.studentId,
-        studentName: result.studentName,
-        action: result.action,
-        time: result.time,
-        alreadyRecorded: result.alreadyRecorded,
-      };
-      setRecentScans((current) => [scan, ...current].slice(0, 8));
       setFeedback({
         type: "success",
         text: result.alreadyRecorded
@@ -48,6 +118,43 @@ function ScanStudentQR() {
   const handleScannerError = useCallback((message) => {
     setFeedback({ type: "error", text: message });
   }, []);
+
+  const handleManualSubmit = async (event) => {
+    event.preventDefault();
+    setManualFeedback(null);
+
+    if (!studentId.trim() || !time || !manualDate) {
+      setManualFeedback({
+        type: "error",
+        text: "Enter a student ID, date, and attendance time.",
+      });
+      return;
+    }
+
+    setSavingManual(true);
+    try {
+      const result = await recordManualStudentAttendance({
+        studentId: studentId.trim(),
+        date: manualDate,
+        period,
+        time,
+      });
+      setManualFeedback({
+        type: "success",
+        text: `${result.period} recorded for ${result.studentName} at ${result.time}.`,
+      });
+      setStudentId("");
+      setTime("");
+    } catch (error) {
+      console.error("Unable to manually record attendance:", error);
+      setManualFeedback({
+        type: "error",
+        text: error.message || "Manual attendance could not be recorded.",
+      });
+    } finally {
+      setSavingManual(false);
+    }
+  };
 
   return (
     <div className="supervisor-page supervisor-student-qr-page">
@@ -106,40 +213,117 @@ function ScanStudentQR() {
               <span>Open the camera, then point it at the student’s QR code.</span>
             </div>
           )}
-        </article>
 
-        <article className="supervisor-panel supervisor-student-qr-panel">
-          <div className="supervisor-student-qr-heading">
-            <span className="supervisor-student-qr-icon live"><Clock3 size={20} /></span>
-            <div>
-              <h2>Recent Scans</h2>
-              <p>Successful scans from this page.</p>
+          <div className="mt-6 border-t border-slate-200 pt-5">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-teal-50 text-teal-700">
+                <ClipboardCheck size={20} />
+              </span>
+              <div>
+                <h2 className="m-0 text-lg font-bold text-slate-900">
+                  Manual Recording
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Record attendance manually when a student cannot scan a QR code.
+                </p>
+              </div>
             </div>
+
+            {manualFeedback && (
+              <div
+                className={`mb-4 flex items-start gap-2 rounded-xl border p-3 text-sm ${
+                  manualFeedback.type === "error"
+                    ? "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                }`}
+                role={manualFeedback.type === "error" ? "alert" : "status"}
+              >
+                {manualFeedback.type === "error" ? (
+                  <AlertCircle className="mt-0.5 shrink-0" size={17} />
+                ) : (
+                  <CheckCircle2 className="mt-0.5 shrink-0" size={17} />
+                )}
+                <span>{manualFeedback.text}</span>
+              </div>
+            )}
+
+            <form
+              className="grid gap-4 sm:grid-cols-2"
+              onSubmit={handleManualSubmit}
+            >
+              <label className="grid content-start gap-1.5 text-xs font-bold text-slate-600">
+                ID Number
+                <input
+                  className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  list="manual-attendance-student-ids"
+                  value={studentId}
+                  onChange={(event) => setStudentId(event.target.value)}
+                  placeholder="Student ID"
+                  autoComplete="off"
+                  required
+                />
+                <datalist id="manual-attendance-student-ids">
+                  {students.map((student) => (
+                    <option key={student.id} value={studentIdOf(student)}>
+                      {studentNameOf(student)}
+                    </option>
+                  ))}
+                </datalist>
+              </label>
+
+              <label className="grid content-start gap-1.5 text-xs font-bold text-slate-600">
+                Date
+                <span className="flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-slate-400 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-100">
+                  <CalendarDays size={16} />
+                  <input
+                    className="min-w-0 flex-1 border-0 p-0 text-sm font-normal text-slate-800 outline-none focus:ring-0"
+                    type="date"
+                    value={manualDate}
+                    onChange={(event) => setManualDate(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+
+              <label className="grid content-start gap-1.5 text-xs font-bold text-slate-600">
+                Attendance action
+                <select
+                  className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  value={period}
+                  onChange={(event) => setPeriod(event.target.value)}
+                >
+                  {attendancePeriods.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid content-start gap-1.5 text-xs font-bold text-slate-600">
+                Time
+                <span className="flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-slate-400 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-100">
+                  <Clock3 size={16} />
+                  <input
+                    className="min-w-0 flex-1 border-0 p-0 text-sm font-normal text-slate-800 outline-none focus:ring-0"
+                    type="time"
+                    value={time}
+                    onChange={(event) => setTime(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+
+              <button
+                className="supervisor-primary min-h-10 justify-center bg-teal-700 hover:bg-teal-800 disabled:cursor-wait disabled:opacity-60 sm:col-span-2"
+                type="submit"
+                disabled={savingManual || studentsLoading}
+              >
+                <ClipboardCheck size={16} />
+                {savingManual ? "Saving..." : "Record attendance"}
+              </button>
+            </form>
           </div>
-
-          {recentScans.length === 0 ? (
-            <div className="supervisor-student-qr-help">
-              <Clock3 size={30} />
-              <strong>No recent scans</strong>
-              <span>Scanned students and their Time-In/Time-Out actions will appear here.</span>
-            </div>
-          ) : (
-            <div className="supervisor-student-qr-list">
-              {recentScans.map((scan) => (
-                <div className="supervisor-student-qr-row" key={scan.id}>
-                  <span className="supervisor-student-qr-avatar">
-                    {(scan.studentName || "S").trim().charAt(0).toUpperCase()}
-                  </span>
-                  <div>
-                    <strong>{scan.studentName}</strong>
-                    <span>{scan.studentId}</span>
-                  </div>
-                  <span className="supervisor-student-qr-action">{scan.action}</span>
-                  <time>{scan.time}</time>
-                </div>
-              ))}
-            </div>
-          )}
         </article>
       </section>
     </div>

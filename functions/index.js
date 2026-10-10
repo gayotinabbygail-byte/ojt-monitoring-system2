@@ -146,8 +146,19 @@ exports.scanStudentAttendanceQr = onCall(
 
     const supervisorUid = request.auth.uid;
     const supervisorProfile = await getUserProfile(supervisorUid);
-    if (supervisorProfile?.role !== "supervisor") {
-      throw new HttpsError("permission-denied", "Only supervisors can scan student attendance QR codes.");
+    if (!["supervisor", "coordinator"].includes(supervisorProfile?.role)) {
+      throw new HttpsError("permission-denied", "Only supervisors or coordinators can scan student attendance QR codes.");
+    }
+
+    const requestedPeriod = request.data?.period;
+    const attendancePeriods = {
+      amIn: "AM / IN",
+      amOut: "AM / OUT",
+      pmIn: "PM / IN",
+      pmOut: "PM / OUT",
+    };
+    if (requestedPeriod !== undefined && !Object.hasOwn(attendancePeriods, requestedPeriod)) {
+      throw new HttpsError("invalid-argument", "Select a valid attendance period.");
     }
 
     const payload = verifyToken(request.data?.token, attendanceQrSecret.value());
@@ -196,7 +207,12 @@ exports.scanStudentAttendanceQr = onCall(
       }
 
       const attendanceSnapshot = await transaction.get(attendanceQuery);
-      const existingRecord = attendanceSnapshot.docs.find((document) => document.data().date === date);
+      const attendanceByNumber = await transaction.get(
+        db.collection("attendance").where("studentId", "==", studentId),
+      );
+      const existingRecord =
+        attendanceSnapshot.docs.find((document) => document.data().date === date) ||
+        attendanceByNumber.docs.find((document) => document.data().date === date);
       const attendanceRef = existingRecord?.ref || fallbackAttendanceRef;
       const attendanceDocument = existingRecord
         ? null
@@ -206,43 +222,88 @@ exports.scanStudentAttendanceQr = onCall(
         : attendanceDocument.exists
           ? attendanceDocument.data()
           : {};
-      const currentTimeIn =
-        previousAttendance.timeIn ||
-        previousAttendance.morningTimeIn ||
-        previousAttendance.afternoonTimeIn ||
-        "";
-      const currentTimeOut =
-        previousAttendance.timeOut ||
-        previousAttendance.morningTimeOut ||
-        previousAttendance.afternoonTimeOut ||
-        "";
+      let action;
+      let totalHours;
+      let attendance;
+      if (requestedPeriod) {
+        if (previousAttendance[requestedPeriod]) {
+          throw new HttpsError(
+            "failed-precondition",
+            `${studentName} already has ${attendancePeriods[requestedPeriod]} recorded today.`,
+          );
+        }
 
-      if (currentTimeIn && currentTimeOut) {
-        throw new HttpsError("failed-precondition", `${studentName} already has both Time-In and Time-Out recorded today.`);
+        const periods = {
+          ...previousAttendance,
+          [requestedPeriod]: time,
+        };
+        const amIn =
+          periods.amIn || periods.morningTimeIn || periods.timeIn || "";
+        const amOut = periods.amOut || periods.morningTimeOut || "";
+        const pmIn = periods.pmIn || periods.afternoonTimeIn || "";
+        const pmOut =
+          periods.pmOut || periods.afternoonTimeOut || periods.timeOut || "";
+        totalHours =
+          calculateHours(amIn, amOut) + calculateHours(pmIn, pmOut);
+        action = attendancePeriods[requestedPeriod];
+        attendance = {
+          ...previousAttendance,
+          studentUid,
+          studentId,
+          studentName,
+          date,
+          [requestedPeriod]: time,
+          timeIn: amIn || pmIn || previousAttendance.timeIn || "",
+          timeOut: pmOut || amOut || previousAttendance.timeOut || "",
+          totalHours,
+          hours: totalHours,
+          status: "Present",
+          lastAttendanceAction: action,
+          supervisorId: supervisorUid,
+          updatedAt: FieldValue.serverTimestamp(),
+          ...(!existingRecord && !attendanceDocument.exists
+            ? { createdAt: FieldValue.serverTimestamp() }
+            : {}),
+        };
+      } else {
+        const currentTimeIn =
+          previousAttendance.timeIn ||
+          previousAttendance.morningTimeIn ||
+          previousAttendance.afternoonTimeIn ||
+          "";
+        const currentTimeOut =
+          previousAttendance.timeOut ||
+          previousAttendance.morningTimeOut ||
+          previousAttendance.afternoonTimeOut ||
+          "";
+
+        if (currentTimeIn && currentTimeOut) {
+          throw new HttpsError("failed-precondition", `${studentName} already has both Time-In and Time-Out recorded today.`);
+        }
+
+        action = currentTimeIn ? "Time-Out" : "Time-In";
+        const nextTimeIn = currentTimeIn || (action === "Time-In" ? time : "");
+        const nextTimeOut = currentTimeOut || (action === "Time-Out" ? time : "");
+        totalHours = calculateHours(nextTimeIn, nextTimeOut);
+        attendance = {
+          ...previousAttendance,
+          studentUid,
+          studentId,
+          studentName,
+          date,
+          timeIn: nextTimeIn,
+          timeOut: nextTimeOut,
+          totalHours,
+          hours: totalHours,
+          status: "Present",
+          lastAttendanceAction: action,
+          supervisorId: supervisorUid,
+          updatedAt: FieldValue.serverTimestamp(),
+          ...(!existingRecord && !attendanceDocument.exists
+            ? { createdAt: FieldValue.serverTimestamp() }
+            : {}),
+        };
       }
-
-      const action = currentTimeIn ? "Time-Out" : "Time-In";
-      const nextTimeIn = currentTimeIn || (action === "Time-In" ? time : "");
-      const nextTimeOut = currentTimeOut || (action === "Time-Out" ? time : "");
-      const totalHours = calculateHours(nextTimeIn, nextTimeOut);
-      const attendance = {
-        ...previousAttendance,
-        studentUid,
-        studentId,
-        studentName,
-        date,
-        timeIn: nextTimeIn,
-        timeOut: nextTimeOut,
-        totalHours,
-        hours: totalHours,
-        status: "Present",
-        lastAttendanceAction: action,
-        supervisorId: supervisorUid,
-        updatedAt: FieldValue.serverTimestamp(),
-        ...(!existingRecord && !attendanceDocument.exists
-          ? { createdAt: FieldValue.serverTimestamp() }
-          : {}),
-      };
 
       transaction.create(scanRef, {
         studentUid,
@@ -260,3 +321,161 @@ exports.scanStudentAttendanceQr = onCall(
     });
   },
 );
+
+exports.recordManualStudentAttendance = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in as a supervisor to record attendance.");
+  }
+
+  const supervisorUid = request.auth.uid;
+  const supervisorProfile = await getUserProfile(supervisorUid);
+  if (supervisorProfile?.role !== "supervisor") {
+    throw new HttpsError("permission-denied", "Only supervisors can manually record attendance.");
+  }
+
+  const studentId = typeof request.data?.studentId === "string"
+    ? request.data.studentId.trim()
+    : "";
+  const date = request.data?.date;
+  const period = request.data?.period;
+  const time = request.data?.time;
+  const periodLabels = {
+    amIn: "AM / IN",
+    amOut: "AM / OUT",
+    pmIn: "PM / IN",
+    pmOut: "PM / OUT",
+  };
+  const parsedDate =
+    typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? new Date(`${date}T00:00:00.000Z`)
+      : null;
+
+  if (!studentId || studentId.length > 128) {
+    throw new HttpsError("invalid-argument", "Enter a valid student ID number.");
+  }
+  if (
+    !parsedDate ||
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.toISOString().slice(0, 10) !== date
+  ) {
+    throw new HttpsError("invalid-argument", "Select a valid attendance date.");
+  }
+  if (!Object.hasOwn(periodLabels, period)) {
+    throw new HttpsError("invalid-argument", "Select a valid attendance period.");
+  }
+  if (
+    typeof time !== "string" ||
+    !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)
+  ) {
+    throw new HttpsError("invalid-argument", "Enter a valid attendance time.");
+  }
+
+  const userCollection = db.collection("users");
+  const matchingProfiles = await Promise.all(
+    ["studentId", "studentID", "idNumber"].map((field) =>
+      userCollection.where(field, "==", studentId).limit(2).get(),
+    ),
+  );
+  const matchesByUid = new Map();
+  matchingProfiles.forEach((snapshot) => {
+    snapshot.docs.forEach((document) => {
+      if (document.data().role === "student") {
+        matchesByUid.set(document.id, document);
+      }
+    });
+  });
+  const studentSnapshot = await userCollection.doc(studentId).get();
+  if (studentSnapshot.exists && studentSnapshot.data().role === "student") {
+    matchesByUid.set(studentSnapshot.id, studentSnapshot);
+  }
+  if (matchesByUid.size === 0) {
+    throw new HttpsError("not-found", "No student account matches that ID number.");
+  }
+  if (matchesByUid.size > 1) {
+    throw new HttpsError("failed-precondition", "More than one student account matches that ID. Contact an administrator.");
+  }
+
+  const studentDocument = [...matchesByUid.values()][0];
+  const studentUid = studentDocument.id;
+  const studentProfile = studentDocument.data();
+  const studentName = getStudentName(studentProfile);
+  const timeParts = time.split(":").map(Number);
+  const hour = timeParts[0] % 12 || 12;
+  const formattedTime = `${hour}:${String(timeParts[1]).padStart(2, "0")} ${timeParts[0] >= 12 ? "PM" : "AM"}`;
+  const attendanceCollection = db.collection("attendance");
+  const attendanceByUid = attendanceCollection
+    .where("studentUid", "==", studentUid)
+    .limit(10);
+  const attendanceByNumber = attendanceCollection
+    .where("studentId", "==", studentId)
+    .limit(10);
+
+  return db.runTransaction(async (transaction) => {
+    const [uidRecords, idRecords] = await Promise.all([
+      transaction.get(attendanceByUid),
+      transaction.get(attendanceByNumber),
+    ]);
+    const currentRecord =
+      uidRecords.docs.find((document) => document.data().date === date) ||
+      idRecords.docs.find((document) => document.data().date === date);
+    const attendanceRef =
+      currentRecord?.ref ||
+      attendanceCollection.doc(`${studentUid}_${date}`);
+    const fallbackDocument = currentRecord
+      ? null
+      : await transaction.get(attendanceRef);
+    const previous = currentRecord
+      ? currentRecord.data()
+      : fallbackDocument.exists
+        ? fallbackDocument.data()
+        : {};
+
+    const existingPeriods = {
+      amIn: previous.amIn || previous.morningTimeIn || previous.timeIn || "",
+      amOut: previous.amOut || previous.morningTimeOut || "",
+      pmIn: previous.pmIn || previous.afternoonTimeIn || "",
+      pmOut: previous.pmOut || previous.afternoonTimeOut || previous.timeOut || "",
+    };
+    if (existingPeriods[period]) {
+      throw new HttpsError(
+        "failed-precondition",
+        `${studentName} already has ${periodLabels[period]} recorded for ${date}.`,
+      );
+    }
+
+    const periods = { ...existingPeriods, [period]: formattedTime };
+    const totalHours =
+      calculateHours(periods.amIn, periods.amOut) +
+      calculateHours(periods.pmIn, periods.pmOut);
+    const attendance = {
+      ...previous,
+      studentUid,
+      studentId,
+      studentName,
+      date,
+      ...periods,
+      timeIn: periods.amIn || periods.pmIn,
+      timeOut: periods.pmOut || periods.amOut,
+      totalHours,
+      hours: totalHours,
+      status: "Present",
+      lastAttendanceAction: periodLabels[period],
+      manualEntry: true,
+      supervisorId: supervisorUid,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...(!currentRecord && !fallbackDocument.exists
+        ? { createdAt: FieldValue.serverTimestamp() }
+        : {}),
+    };
+
+    transaction.set(attendanceRef, attendance);
+    return {
+      studentId,
+      studentName,
+      date,
+      period: periodLabels[period],
+      time: formattedTime,
+      totalHours,
+    };
+  });
+});

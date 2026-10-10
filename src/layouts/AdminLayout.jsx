@@ -8,6 +8,8 @@ import {
   LayoutDashboard,
   BookOpen,
   FileAxis3d,
+  UserRound,
+  ClipboardCheck,
   Settings,
   Menu,
   LogOut,
@@ -124,6 +126,40 @@ function AdminLayout() {
             <span className="nav-text">Students</span>
           </NavLink>
 
+          {user?.role === "coordinator" && (
+            <NavLink
+              to={`${basePath}/attendance`}
+              end
+              onClick={closeSidebarOnMobile}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+              title="Attendance"
+            >
+              <span className="nav-icon">
+                <ClipboardCheck size={18} />
+              </span>
+              <span className="nav-text">Attendance</span>
+            </NavLink>
+          )}
+
+          {user?.role === "coordinator" && (
+            <NavLink
+              to={`${basePath}/supervisor`}
+              end
+              onClick={closeSidebarOnMobile}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+              title="Supervisor"
+            >
+              <span className="nav-icon">
+                <UserRound size={18} />
+              </span>
+              <span className="nav-text">Supervisor</span>
+            </NavLink>
+          )}
+
           {user?.role === "admin" && (
             <NavLink
               to={`${basePath}/ojtcoordinators`}
@@ -141,21 +177,23 @@ function AdminLayout() {
             </NavLink>
           )}
 
-          <NavLink
-            to={`${basePath}/settings`}
-            end
-            onClick={closeSidebarOnMobile}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-            title="Settings"
-          >
-            <span className="nav-icon">
-              <Settings size={18} />
-            </span>
+          {user?.role === "admin" && (
+            <NavLink
+              to={`${basePath}/settings`}
+              end
+              onClick={closeSidebarOnMobile}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+              title="Settings"
+            >
+              <span className="nav-icon">
+                <Settings size={18} />
+              </span>
 
-            <span className="nav-text">Settings</span>
-          </NavLink>
+              <span className="nav-text">Settings</span>
+            </NavLink>
+          )}
 
           <button
             type="button"

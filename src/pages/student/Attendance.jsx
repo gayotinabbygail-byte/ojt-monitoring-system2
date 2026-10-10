@@ -206,12 +206,20 @@ function Attendance() {
           ) : (
             <div className="student-attendance-today-grid">
               <div>
-                <span>Time In</span>
-                <strong>{todaysAttendance?.timeIn || "Not recorded"}</strong>
+                <span>AM / IN</span>
+                <strong>{todaysAttendance?.amIn || todaysAttendance?.timeIn || "Not recorded"}</strong>
               </div>
               <div>
-                <span>Time Out</span>
-                <strong>{todaysAttendance?.timeOut || "Not recorded"}</strong>
+                <span>AM / OUT</span>
+                <strong>{todaysAttendance?.amOut || todaysAttendance?.morningTimeOut || "Not recorded"}</strong>
+              </div>
+              <div>
+                <span>PM / IN</span>
+                <strong>{todaysAttendance?.pmIn || todaysAttendance?.afternoonTimeIn || "Not recorded"}</strong>
+              </div>
+              <div>
+                <span>PM / OUT</span>
+                <strong>{todaysAttendance?.pmOut || todaysAttendance?.timeOut || todaysAttendance?.afternoonTimeOut || "Not recorded"}</strong>
               </div>
               <div>
                 <span>Today’s hours</span>
@@ -244,23 +252,27 @@ function Attendance() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Time In</th>
-                <th>Time Out</th>
+                <th>AM In</th>
+                <th>AM Out</th>
+                <th>PM In</th>
+                <th>PM Out</th>
                 <th>Total Hours</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {attendanceLoading ? (
-                <tr><td colSpan="5">Loading attendance records...</td></tr>
+                <tr><td colSpan="7">Loading attendance records...</td></tr>
               ) : attendanceRecords.length === 0 ? (
-                <tr><td colSpan="5"><div className="student-empty-state">No attendance records have been recorded yet.</div></td></tr>
+                <tr><td colSpan="7"><div className="student-empty-state">No attendance records have been recorded yet.</div></td></tr>
               ) : (
                 attendanceRecords.map((record) => (
                   <tr key={record.id}>
                     <td>{formatDateLabel(record.date)}</td>
-                    <td>{record.timeIn || record.morningTimeIn || "—"}</td>
-                    <td>{record.timeOut || record.afternoonTimeOut || "—"}</td>
+                    <td>{record.amIn || record.timeIn || record.morningTimeIn || "—"}</td>
+                    <td>{record.amOut || record.morningTimeOut || "—"}</td>
+                    <td>{record.pmIn || record.afternoonTimeIn || "—"}</td>
+                    <td>{record.pmOut || record.timeOut || record.afternoonTimeOut || "—"}</td>
                     <td>{Number(record.totalHours ?? record.hours ?? 0).toFixed(2)}h</td>
                     <td>
                       <span className={`status-badge ${record.status === "Present" ? "active" : "pending"}`}>

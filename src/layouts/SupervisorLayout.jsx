@@ -5,6 +5,7 @@ import {
   LogOut,
   Menu,
   QrCode,
+  ClipboardList,
   Users,
 } from "lucide-react";
 import { logout } from "../services/authService";
@@ -84,6 +85,12 @@ function SupervisorLayout() {
             to="/supervisor/scan-student-qr"
             label="Scan Student QR"
             icon={QrCode}
+            onClick={closeSidebarOnMobile}
+          />
+          <SupervisorNavLink
+            to="/supervisor/attendance"
+            label="Attendance Records"
+            icon={ClipboardList}
             onClick={closeSidebarOnMobile}
           />
           <SupervisorNavLink

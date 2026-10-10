@@ -31,8 +31,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
-      allow create, update, delete: if isAdmin();
+      allow read: if isAdmin() ||
+        (isCoordinator() && resource.data.role == "supervisor") ||
+        (signedIn() && request.auth.uid == userId);
+      allow create: if isAdmin() ||
+        (isCoordinator() &&
+          request.resource.data.role == "supervisor" &&
+          request.resource.data.createdBy == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     match /students/{studentId} {

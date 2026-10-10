@@ -1,11 +1,13 @@
 .supervisor-student-qr-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 
 .supervisor-student-qr-panel {
   min-width: 0;
+  width: min(100%, 820px);
+  margin-inline: auto;
 }
 
 .supervisor-student-qr-heading {

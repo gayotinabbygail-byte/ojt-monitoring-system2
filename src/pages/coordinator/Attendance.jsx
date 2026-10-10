@@ -1,40 +1,46 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  Edit3,
-  Eye,
-  Search,
-  Trash2,
-  UserX,
-  X,
-} from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   addDoc,
   collection,
-  deleteDoc,
-  doc,
   onSnapshot,
   serverTimestamp,
   updateDoc,
+  doc,
 } from "firebase/firestore";
+import {
+  AlertCircle,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardCheck,
+  Clock3,
+  QrCode,
+  Search,
+  ScanLine,
+  UserRound,
+} from "lucide-react";
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/useAuth";
-import "../../styles/attendance-management.css";
-import "../../styles/coordinator-module.css";
+import { scanStudentAttendanceQr } from "../../services/attendanceQrService";
 
-const statuses = ["Present", "Absent", "Late", "Incomplete"];
-const today = () => new Date().toISOString().slice(0, 10);
+const StudentQrScanner = lazy(
+  () => import("../supervisor/SupervisorStudentQrScanner"),
+);
 
-const emptyForm = {
-  studentId: "",
-  date: today(),
-  timeIn: "",
-  timeOut: "",
-  status: "Present",
-  remarks: "",
-};
+const attendancePeriods = [
+  { value: "amIn", label: "AM / IN", short: "AM IN" },
+  { value: "amOut", label: "AM / OUT", short: "AM OUT" },
+  { value: "pmIn", label: "PM / IN", short: "PM IN" },
+  { value: "pmOut", label: "PM / OUT", short: "PM OUT" },
+];
+
+function getLocalDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
 function getStudentName(student) {
   return (
@@ -47,51 +53,62 @@ function getStudentName(student) {
 }
 
 function getStudentId(student) {
-  return (
-    student.studentId || student.idNumber || student.studentID || student.id
+  return String(
+    student.studentId ||
+      student.studentID ||
+      student.idNumber ||
+      student.id ||
+      "",
   );
 }
 
-function getCompany(student) {
-  return (
-    student.company ||
-    student.partnerCompany ||
-    student.companyName ||
-    "Not assigned"
-  );
-}
-
-function getInitials(name) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function calculateHours(timeIn, timeOut) {
-  if (!timeIn || !timeOut) return 0;
-  const [inHour, inMinute] = timeIn.split(":").map(Number);
-  const [outHour, outMinute] = timeOut.split(":").map(Number);
-  return Number(
-    ((outHour * 60 + outMinute - (inHour * 60 + inMinute)) / 60).toFixed(2),
-  );
-}
-
-function normalizeRecord(record) {
-  return {
-    ...record,
-    studentId: record.studentId || record.studentID || "",
-    studentName: record.studentName || record.student || "Unnamed student",
-    company: record.company || record.partnerCompany || "Not assigned",
-    date: record.date || "",
-    timeIn: record.timeIn || "",
-    timeOut: record.timeOut || "",
-    totalHours: Number(record.totalHours ?? record.hours ?? 0),
-    status: record.status || "Incomplete",
-    remarks: record.remarks || record.note || "",
+function getPeriodTime(record, period) {
+  const legacyValues = {
+    amIn: record.timeIn || record.morningTimeIn,
+    amOut: record.morningTimeOut,
+    pmIn: record.afternoonTimeIn,
+    pmOut: record.timeOut || record.afternoonTimeOut,
   };
+  return record[period] || legacyValues[period] || "";
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return value;
+  const hour = Number(match[1]);
+  return `${hour % 12 || 12}:${match[2]} ${hour >= 12 ? "PM" : "AM"}`;
+}
+
+function timeInMinutes(value) {
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(value || "");
+  if (!match) return null;
+  let hour = Number(match[1]) % 12;
+  if (match[3].toUpperCase() === "PM") hour += 12;
+  return hour * 60 + Number(match[2]);
+}
+
+function calculateTotalHours(record) {
+  const pairs = [
+    [getPeriodTime(record, "amIn"), getPeriodTime(record, "amOut")],
+    [getPeriodTime(record, "pmIn"), getPeriodTime(record, "pmOut")],
+  ];
+  return pairs.reduce((total, [startValue, endValue]) => {
+    const start = timeInMinutes(startValue);
+    const end = timeInMinutes(endValue);
+    return start === null || end === null
+      ? total
+      : total + Math.max(0, end - start) / 60;
+  }, 0);
+}
+
+function dateLabel(value) {
+  if (!value) return "—";
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function Attendance() {
@@ -102,19 +119,20 @@ function Attendance() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState(today());
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [companyFilter, setCompanyFilter] = useState("All companies");
-  const [modal, setModal] = useState(null);
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [form, setForm] = useState(emptyForm);
-  const [formError, setFormError] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [scannerDate, setScannerDate] = useState(getLocalDate);
+  const [manualDate, setManualDate] = useState(getLocalDate);
+  const [scannerPeriod, setScannerPeriod] = useState("amIn");
+  const [manualPeriod, setManualPeriod] = useState("amIn");
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerBusy, setScannerBusy] = useState(false);
+  const [manualStudentId, setManualStudentId] = useState("");
+  const [manualTime, setManualTime] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [savingManual, setSavingManual] = useState(false);
 
   useEffect(() => {
     let studentsLoaded = false;
     let attendanceLoaded = false;
-
     const finishLoading = () => {
       if (studentsLoaded && attendanceLoaded) setLoading(false);
     };
@@ -130,32 +148,23 @@ function Attendance() {
       },
       (snapshotError) => {
         console.error("Unable to load students for attendance:", snapshotError);
-        setError(
-          "Students could not be loaded. Check your Firestore permissions and try again.",
-        );
+        setError("Student records could not be loaded. Check Firestore permissions.");
         studentsLoaded = true;
         finishLoading();
       },
     );
-
     const unsubscribeAttendance = onSnapshot(
       collection(db, "attendance"),
       (snapshot) => {
         setRecords(
-          snapshot.docs.map((item) =>
-            normalizeRecord({ id: item.id, ...item.data() }),
-          ),
+          snapshot.docs.map((item) => ({ id: item.id, ...item.data() })),
         );
         attendanceLoaded = true;
         finishLoading();
       },
       (snapshotError) => {
         console.error("Unable to load attendance records:", snapshotError);
-        setError(
-          snapshotError.code === "permission-denied"
-            ? "You do not have permission to view attendance records. Update your Firestore rules to allow coordinator access."
-            : `Attendance records could not be loaded (${snapshotError.code || "unknown error"}).`,
-        );
+        setError("Attendance records could not be loaded. Check Firestore permissions.");
         attendanceLoaded = true;
         finishLoading();
       },
@@ -167,541 +176,528 @@ function Attendance() {
     };
   }, []);
 
-  const studentMap = useMemo(
+  const studentById = useMemo(
     () => new Map(students.map((student) => [getStudentId(student), student])),
     [students],
   );
-  const companies = useMemo(
-    () => [
-      "All companies",
-      ...new Set(records.map((record) => record.company).filter(Boolean)),
-    ],
-    [records],
+  const attendanceForScannerDate = useMemo(
+    () => records.filter((record) => record.date === scannerDate),
+    [records, scannerDate],
   );
-  const visibleRecords = useMemo(
-    () =>
-      records.filter((record) => {
-        const searchValue = search.trim().toLowerCase();
-        const matchesSearch =
-          !searchValue ||
-          `${record.studentName} ${record.studentId} ${record.company}`
-            .toLowerCase()
-            .includes(searchValue);
-        return (
-          matchesSearch &&
-          (!dateFilter || record.date === dateFilter) &&
-          (statusFilter === "All" || record.status === statusFilter) &&
-          (companyFilter === "All companies" ||
-            record.company === companyFilter)
-        );
-      }),
-    [companyFilter, dateFilter, records, search, statusFilter],
+  const attendanceForManualDate = useMemo(
+    () => records.filter((record) => record.date === manualDate),
+    [records, manualDate],
   );
-
-  const summary = useMemo(
-    () =>
-      records.reduce(
-        (result, record) => {
-          if (record.date === today()) {
-            result[record.status.toLowerCase()] =
-              (result[record.status.toLowerCase()] || 0) + 1;
-          }
-          return result;
-        },
-        { present: 0, absent: 0, late: 0 },
-      ),
-    [records],
-  );
-
-  const showNotice = (message) => {
-    setNotice(message);
-    window.setTimeout(() => setNotice(""), 3000);
-  };
-
-  const openEdit = (record) => {
-    setForm({
-      studentId: record.studentId,
-      date: record.date,
-      timeIn: record.timeIn,
-      timeOut: record.timeOut,
-      status: record.status,
-      remarks: record.remarks,
+  const visibleScannerRecords = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return attendanceForScannerDate;
+    return attendanceForScannerDate.filter((record) => {
+      const student =
+        studentById.get(String(record.studentId || "")) ||
+        students.find((item) => item.id === record.studentUid);
+      const name = record.studentName || record.student || getStudentName(student || {});
+      return `${name} ${record.studentId || ""} ${record.company || ""}`
+        .toLowerCase()
+        .includes(query);
     });
-    setEditingRecord(record);
-    setFormError("");
-    setModal("form");
-  };
+  }, [attendanceForScannerDate, search, studentById, students]);
 
-  const handleSave = async (event) => {
+  const handleScan = useCallback(
+    async (token) => {
+      setScannerOpen(false);
+      setScannerBusy(true);
+      setError("");
+      setNotice("");
+
+      if (scannerDate !== getLocalDate()) {
+        setError("QR scans can only record attendance for today. Use manual recording for another date.");
+        setScannerBusy(false);
+        return;
+      }
+
+      try {
+        const result = await scanStudentAttendanceQr(token, scannerPeriod);
+        const selectedPeriod = attendancePeriods.find(
+          (period) => period.value === scannerPeriod,
+        );
+        setNotice(
+          result.alreadyRecorded
+            ? `${result.studentName} already has ${result.action} recorded at ${result.time}.`
+            : `${selectedPeriod?.label} recorded for ${result.studentName} at ${result.time}.`,
+        );
+      } catch (scanError) {
+        console.error("Unable to record scanned attendance:", scanError);
+        setError(scanError.message || "The attendance QR code could not be validated.");
+      } finally {
+        setScannerBusy(false);
+      }
+    },
+    [scannerDate, scannerPeriod],
+  );
+
+  const handleScannerError = useCallback((message) => {
+    setError(message);
+  }, []);
+
+  const saveManualAttendance = async (event) => {
     event.preventDefault();
-    setFormError("");
-    const student = studentMap.get(form.studentId);
-    const hours = calculateHours(form.timeIn, form.timeOut);
+    setError("");
+    setNotice("");
 
+    const studentId = manualStudentId.trim();
+    const student = studentById.get(studentId);
     if (!student) {
-      setFormError("Student is required.");
+      setError("Enter an ID number belonging to a registered student.");
       return;
     }
-    if (!form.date) {
-      setFormError("Date is required.");
+    if (!manualTime) {
+      setError("Enter an attendance time.");
       return;
     }
-    if (["Present", "Late"].includes(form.status) && !form.timeIn) {
-      setFormError("Time In is required for Present or Late attendance.");
-      return;
-    }
-    if (form.timeOut && !form.timeIn) {
-      setFormError("Time In is required before entering Time Out.");
-      return;
-    }
-    if (form.timeIn && form.timeOut && hours < 0) {
-      setFormError("Time Out cannot be earlier than Time In.");
-      return;
-    }
-    const duplicate = records.find(
+
+    const studentName = getStudentName(student);
+    const existingRecord = records.find(
       (record) =>
-        record.studentId === form.studentId &&
-        record.date === form.date &&
-        record.id !== editingRecord?.id,
+        record.date === manualDate &&
+        String(record.studentId || "") === studentId,
     );
-    if (duplicate) {
-      setFormError(
-        "An attendance record already exists for this student and date.",
+    if (existingRecord && getPeriodTime(existingRecord, manualPeriod)) {
+      setError(
+        `${studentName} already has ${attendancePeriods.find((period) => period.value === manualPeriod)?.label} recorded for this date.`,
       );
       return;
     }
 
-    const data = {
-      studentId: form.studentId,
-      studentName: getStudentName(student),
-      company: getCompany(student),
-      date: form.date,
-      timeIn: form.timeIn,
-      timeOut: form.timeOut,
-      totalHours: hours,
-      status: form.status,
-      remarks: form.remarks.trim(),
-      updatedBy: user?.uid || null,
-      updatedAt: serverTimestamp(),
+    const currentRecord = existingRecord || {};
+    const formattedTime = formatTime(manualTime);
+    const updatedRecord = {
+      ...currentRecord,
+      studentUid: student.uid || student.id,
+      studentId,
+      studentName,
+      company:
+        student.company || student.partnerCompany || student.companyName || "",
+      date: manualDate,
+      [manualPeriod]: formattedTime,
     };
+    const amIn = getPeriodTime(updatedRecord, "amIn");
+    const amOut = getPeriodTime(updatedRecord, "amOut");
+    const pmIn = getPeriodTime(updatedRecord, "pmIn");
+    const pmOut = getPeriodTime(updatedRecord, "pmOut");
+    const periodInfo = attendancePeriods.find(
+      (period) => period.value === manualPeriod,
+    );
 
-    setSaving(true);
+    setSavingManual(true);
     try {
-      if (editingRecord) {
-        await updateDoc(doc(db, "attendance", editingRecord.id), data);
-        showNotice("Attendance updated successfully.");
+      const data = {
+        studentUid:
+          student.uid || student.studentUid || student.authUid || student.id,
+        studentId,
+        studentName,
+        company: updatedRecord.company,
+        date: manualDate,
+        [manualPeriod]: formattedTime,
+        timeIn: amIn || pmIn || currentRecord.timeIn || "",
+        timeOut: pmOut || amOut || currentRecord.timeOut || "",
+        totalHours: Number(calculateTotalHours(updatedRecord).toFixed(2)),
+        hours: Number(calculateTotalHours(updatedRecord).toFixed(2)),
+        status: "Present",
+        remarks: remarks.trim() || currentRecord.remarks || "",
+        lastAttendanceAction: periodInfo.label,
+        updatedBy: user?.uid || null,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (existingRecord) {
+        await updateDoc(doc(db, "attendance", existingRecord.id), data);
       } else {
         await addDoc(collection(db, "attendance"), {
           ...data,
           createdAt: serverTimestamp(),
         });
-        showNotice("Attendance added successfully.");
       }
-      setModal(null);
+      setNotice(
+        `${periodInfo.label} saved for ${studentName} on ${dateLabel(manualDate)}.`,
+      );
+      setManualStudentId("");
+      setManualTime("");
+      setRemarks("");
     } catch (saveError) {
-      console.error("Unable to save attendance record:", saveError);
-      setFormError("Attendance could not be saved. Please try again.");
+      console.error("Unable to save manual attendance:", saveError);
+      setError(saveError.message || "Manual attendance could not be saved.");
     } finally {
-      setSaving(false);
+      setSavingManual(false);
     }
   };
 
-  const handleDelete = async (record) => {
-    if (
-      !window.confirm(
-        `Delete attendance for ${record.studentName} on ${record.date}?`,
-      )
-    )
-      return;
-    try {
-      await deleteDoc(doc(db, "attendance", record.id));
-      showNotice("Attendance deleted successfully.");
-      if (modal?.id === record.id) setModal(null);
-    } catch (deleteError) {
-      console.error("Unable to delete attendance record:", deleteError);
-      setError("Attendance could not be deleted. Please try again.");
-    }
-  };
+  const rowsForDate = (dateRecords) =>
+    dateRecords.map((record) => {
+      const student =
+        studentById.get(String(record.studentId || "")) ||
+        students.find((item) => item.id === record.studentUid);
+      return {
+        ...record,
+        displayName:
+          record.studentName || record.student || getStudentName(student || {}),
+        displayId: record.studentId || getStudentId(student || {}) || "—",
+      };
+    });
 
   return (
-    <main className="attendance-management-page">
-      <header className="attendance-management-header">
-        <div>
-          <p className="attendance-management-eyebrow">
-            LCCI · OJT MONITORING SYSTEM
+    <main className="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-7">
+        <header>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-700">
+            LCCI · OJT Monitoring System
           </p>
-          <h1>Attendance</h1>
-          <p>Monitor and manage student OJT attendance records.</p>
-        </div>
-      </header>
+          <h1 className="m-0 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Student Attendance Monitoring
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm text-slate-500">
+            Record student attendance using the QR scanner or enter a record manually.
+          </p>
+        </header>
 
-      <section
-        className="attendance-summary-cards"
-        aria-label="Attendance summary"
-      >
-        <article>
-          <span className="attendance-summary-icon blue">
-            <CalendarDays size={18} />
-          </span>
-          <div>
-            <small>Total Students</small>
-            <strong>{students.length}</strong>
-          </div>
-        </article>
-        <article>
-          <span className="attendance-summary-icon green">
-            <CheckCircle2 size={18} />
-          </span>
-          <div>
-            <small>Present Today</small>
-            <strong>{summary.present}</strong>
-          </div>
-        </article>
-        <article>
-          <span className="attendance-summary-icon red">
-            <UserX size={18} />
-          </span>
-          <div>
-            <small>Absent Today</small>
-            <strong>{summary.absent}</strong>
-          </div>
-        </article>
-        <article>
-          <span className="attendance-summary-icon amber">
-            <Clock3 size={18} />
-          </span>
-          <div>
-            <small>Late Today</small>
-            <strong>{summary.late}</strong>
-          </div>
-        </article>
-      </section>
-
-      <section className="attendance-management-panel">
-        <div className="attendance-management-toolbar">
-          <label className="attendance-management-search">
-            <Search size={17} />
-            <span className="sr-only">Search student attendance</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search student by name or ID"
-            />
-          </label>
-          <div className="attendance-management-filters">
-            <label>
-              <span className="sr-only">Filter by date</span>
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(event) => setDateFilter(event.target.value)}
-              />
-            </label>
-            <select
-              aria-label="Filter by attendance status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option>All</option>
-              {statuses.map((status) => (
-                <option key={status}>{status}</option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by partner company"
-              value={companyFilter}
-              onChange={(event) => setCompanyFilter(event.target.value)}
-            >
-              {companies.map((company) => (
-                <option key={company}>{company}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {error && (
-          <div className="attendance-management-error" role="alert">
-            {error}
-          </div>
-        )}
-        {loading ? (
-          <div className="attendance-management-empty">
-            Loading attendance records...
-          </div>
-        ) : records.length === 0 ? (
-          <div className="attendance-management-empty">
-            <strong>No attendance records yet</strong>
-            <span>
-              Attendance records will appear here once they are added.
-            </span>
-          </div>
-        ) : visibleRecords.length === 0 ? (
-          <div className="attendance-management-empty">
-            <strong>No matching attendance records</strong>
-            <span>Try changing the search or filters.</span>
-          </div>
-        ) : (
-          <div className="attendance-management-table-wrap">
-            <table className="attendance-management-table">
-              <thead>
-                <tr>
-                  <th>Student Name</th>
-                  <th>Student ID</th>
-                  <th>Partner Company</th>
-                  <th>Date</th>
-                  <th>Time In</th>
-                  <th>Time Out</th>
-                  <th>Total Hours</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td>
-                      <div className="attendance-management-student">
-                        <span>{getInitials(record.studentName)}</span>
-                        <strong>{record.studentName}</strong>
-                      </div>
-                    </td>
-                    <td>{record.studentId || "—"}</td>
-                    <td>{record.company}</td>
-                    <td>{record.date || "—"}</td>
-                    <td>{record.timeIn || "—"}</td>
-                    <td>{record.timeOut || "—"}</td>
-                    <td>
-                      {record.totalHours ? `${record.totalHours} hrs` : "—"}
-                    </td>
-                    <td>
-                      <span
-                        className={`attendance-management-status ${record.status.toLowerCase()}`}
-                      >
-                        {record.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="attendance-management-actions">
-                        <button
-                          type="button"
-                          title="View details"
-                          aria-label={`View ${record.studentName}`}
-                          onClick={() => setModal(record)}
-                        >
-                          <Eye size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          title="Edit"
-                          aria-label={`Edit ${record.studentName}`}
-                          onClick={() => openEdit(record)}
-                        >
-                          <Edit3 size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          title="Delete"
-                          aria-label={`Delete ${record.studentName}`}
-                          onClick={() => handleDelete(record)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {!loading && records.length > 0 && (
-          <footer className="attendance-management-footer">
-            Showing {visibleRecords.length} of {records.length} attendance
-            records
-          </footer>
-        )}
-      </section>
-
-      {modal && (
-        <div
-          className="attendance-management-backdrop"
-          role="presentation"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) setModal(null);
-          }}
-        >
-          <section
-            className="attendance-management-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="attendance-management-modal-title"
+        {(error || notice) && (
+          <div
+            className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${
+              error
+                ? "border-rose-200 bg-rose-50 text-rose-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            }`}
+            role={error ? "alert" : "status"}
           >
-            <header>
+            {error ? (
+              <AlertCircle className="mt-0.5 shrink-0" size={18} />
+            ) : (
+              <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+            )}
+            <p>{error || notice}</p>
+          </div>
+        )}
+
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                <QrCode size={20} />
+              </span>
               <div>
-                <p>
-                  {modal === "form"
-                    ? editingRecord
-                      ? "Edit attendance record"
-                      : "Attendance record"
-                    : "Attendance details"}
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">
+                  Scanner method
                 </p>
-                <h2 id="attendance-management-modal-title">
-                  {modal === "form"
-                    ? editingRecord
-                      ? "Edit Attendance"
-                      : "Add Attendance"
-                    : modal.studentName}
+                <h2 className="m-0 mt-1 text-lg font-bold text-slate-900">
+                  Scan a student QR code
                 </h2>
               </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setModal(null)}
-              >
-                <X size={18} />
-              </button>
-            </header>
-            {modal === "form" ? (
-              <form onSubmit={handleSave}>
-                <div className="attendance-management-form">
-                  <label>
-                    <span>Student *</span>
-                    <select
-                      value={form.studentId}
-                      onChange={(event) =>
-                        setForm({ ...form, studentId: event.target.value })
-                      }
-                    >
-                      <option value="">Select student</option>
-                      {students.map((student) => (
-                        <option key={student.id} value={getStudentId(student)}>
-                          {getStudentName(student)} · {getStudentId(student)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span>Date *</span>
-                    <input
-                      type="date"
-                      value={form.date}
-                      onChange={(event) =>
-                        setForm({ ...form, date: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>Time In</span>
-                    <input
-                      type="time"
-                      value={form.timeIn}
-                      onChange={(event) =>
-                        setForm({ ...form, timeIn: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>Time Out</span>
-                    <input
-                      type="time"
-                      value={form.timeOut}
-                      onChange={(event) =>
-                        setForm({ ...form, timeOut: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>Status *</span>
-                    <select
-                      value={form.status}
-                      onChange={(event) =>
-                        setForm({ ...form, status: event.target.value })
-                      }
-                    >
-                      {statuses.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="attendance-management-form-wide">
-                    <span>Remarks</span>
-                    <textarea
-                      value={form.remarks}
-                      onChange={(event) =>
-                        setForm({ ...form, remarks: event.target.value })
-                      }
-                      rows="3"
-                    />
-                  </label>
-                  {formError && (
-                    <p
-                      className="attendance-management-form-error"
-                      role="alert"
-                    >
-                      {formError}
+            </div>
+          </div>
+
+          <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(260px,0.72fr)_minmax(0,1.65fr)]">
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-slate-700">
+                Date
+                <span className="mt-1.5 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-500">
+                  <CalendarDays size={17} />
+                  <input
+                    aria-label="Scanner attendance date"
+                    className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-slate-700 outline-none focus:ring-0"
+                    type="date"
+                    value={scannerDate}
+                    onChange={(event) => setScannerDate(event.target.value)}
+                  />
+                </span>
+              </label>
+              <label className="block text-sm font-semibold text-slate-700">
+                Attendance action
+                <select
+                  className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  value={scannerPeriod}
+                  onChange={(event) => setScannerPeriod(event.target.value)}
+                >
+                  {attendancePeriods.map((period) => (
+                    <option key={period.value} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/50 p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Scanner</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {scannerOpen ? "Camera is ready to scan" : "Secure student QR recognition"}
                     </p>
-                  )}
+                  </div>
+                  <ScanLine className="text-blue-600" size={20} />
                 </div>
-                <footer>
-                  <button
-                    type="button"
-                    className="attendance-management-secondary"
-                    onClick={() => setModal(null)}
+                {scannerOpen ? (
+                  <Suspense
+                    fallback={
+                      <div className="grid aspect-square place-items-center rounded-xl bg-white text-sm text-slate-500">
+                        Loading scanner…
+                      </div>
+                    }
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="attendance-primary-button"
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Save Attendance"}
-                  </button>
-                </footer>
-              </form>
-            ) : (
-              <div className="attendance-management-details">
-                <div>
-                  <small>Student ID</small>
-                  <strong>{modal.studentId || "—"}</strong>
-                </div>
-                <div>
-                  <small>Partner Company</small>
-                  <strong>{modal.company}</strong>
-                </div>
-                <div>
-                  <small>Date</small>
-                  <strong>{modal.date || "—"}</strong>
-                </div>
-                <div>
-                  <small>Time</small>
-                  <strong>
-                    {modal.timeIn || "—"} - {modal.timeOut || "—"}
-                  </strong>
-                </div>
-                <div>
-                  <small>Total Hours</small>
-                  <strong>{modal.totalHours || "—"}</strong>
-                </div>
-                <div>
-                  <small>Status</small>
-                  <strong>{modal.status}</strong>
-                </div>
-                <div className="attendance-management-detail-wide">
-                  <small>Remarks</small>
-                  <strong>{modal.remarks || "No remarks"}</strong>
-                </div>
+                    <StudentQrScanner
+                      onScan={handleScan}
+                      onScannerError={handleScannerError}
+                    />
+                  </Suspense>
+                ) : (
+                  <div className="grid aspect-square max-h-64 place-items-center rounded-xl border border-slate-200 bg-white text-center">
+                    <div>
+                      <QrCode className="mx-auto text-blue-300" size={56} strokeWidth={1.4} />
+                      <p className="mt-3 text-sm font-semibold text-slate-700">
+                        Ready to scan
+                      </p>
+                      <p className="mt-1 px-4 text-xs text-slate-500">
+                        Start the scanner and center a student QR code in the frame.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <button
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-60"
+                  type="button"
+                  disabled={scannerBusy}
+                  onClick={() => {
+                    setError("");
+                    setScannerOpen((open) => !open);
+                  }}
+                >
+                  <ScanLine size={16} />
+                  {scannerBusy
+                    ? "Recording attendance…"
+                    : scannerOpen
+                      ? "Close scanner"
+                      : "Open scanner"}
+                </button>
+                <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-500">
+                  <ClipboardCheck className="mt-0.5 shrink-0" size={14} />
+                  QR scans record today&apos;s attendance only. Use manual recording for another date.
+                </p>
               </div>
-            )}
-          </section>
-        </div>
-      )}
-      {notice && (
-        <div className="attendance-management-notice" role="status">
-          {notice}
-        </div>
-      )}
+            </div>
+
+            <AttendanceTable
+              title="Name of Student"
+              records={rowsForDate(visibleScannerRecords)}
+              loading={loading}
+              search={search}
+              onSearch={setSearch}
+              emptyText="No attendance records for this date."
+            />
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-teal-50 text-teal-700">
+                <ClipboardCheck size={20} />
+              </span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-700">
+                  Manual recording
+                </p>
+                <h2 className="m-0 mt-1 text-lg font-bold text-slate-900">
+                  Enter attendance details
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(260px,0.72fr)_minmax(0,1.65fr)]">
+            <form className="space-y-4" onSubmit={saveManualAttendance}>
+              <label className="block text-sm font-semibold text-slate-700">
+                ID Number
+                <input
+                  className="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-800 outline-none placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  list="registered-student-ids"
+                  value={manualStudentId}
+                  onChange={(event) => setManualStudentId(event.target.value)}
+                  placeholder="Enter student ID"
+                  required
+                />
+                <datalist id="registered-student-ids">
+                  {students.map((student) => (
+                    <option key={student.id} value={getStudentId(student)}>
+                      {getStudentName(student)}
+                    </option>
+                  ))}
+                </datalist>
+              </label>
+
+              <label className="block text-sm font-semibold text-slate-700">
+                Date
+                <input
+                  className="mt-1.5 block w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-800 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  type="date"
+                  value={manualDate}
+                  onChange={(event) => setManualDate(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="block text-sm font-semibold text-slate-700">
+                Attendance action
+                <select
+                  className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  value={manualPeriod}
+                  onChange={(event) => setManualPeriod(event.target.value)}
+                >
+                  {attendancePeriods.map((period) => (
+                    <option key={period.value} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-sm font-semibold text-slate-700">
+                Time
+                <span className="mt-1.5 flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-slate-400 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-100">
+                  <Clock3 size={16} />
+                  <input
+                    className="min-w-0 flex-1 border-0 p-0 text-sm font-normal text-slate-800 outline-none focus:ring-0"
+                    type="time"
+                    value={manualTime}
+                    onChange={(event) => setManualTime(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+
+              <label className="block text-sm font-semibold text-slate-700">
+                Textbox
+                <textarea
+                  className="mt-1.5 block min-h-24 w-full resize-y rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-800 outline-none placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  value={remarks}
+                  onChange={(event) => setRemarks(event.target.value)}
+                  placeholder="Add a note (optional)"
+                  rows={3}
+                />
+              </label>
+
+              <button
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-200 disabled:cursor-wait disabled:opacity-60"
+                type="submit"
+                disabled={savingManual || loading}
+              >
+                <CheckCircle2 size={16} />
+                {savingManual ? "Saving record…" : "Save attendance"}
+              </button>
+            </form>
+
+            <AttendanceTable
+              title="Manual attendance records"
+              records={rowsForDate(attendanceForManualDate)}
+              loading={loading}
+              emptyText="No attendance records for this date."
+            />
+          </div>
+        </section>
+      </div>
     </main>
+  );
+}
+
+function AttendanceTable({
+  title,
+  records,
+  loading,
+  search,
+  onSearch,
+  emptyText,
+}) {
+  return (
+    <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200">
+      <header className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <UserRound className="text-slate-400" size={17} />
+          <h3 className="m-0 text-sm font-bold uppercase tracking-wide text-slate-700">
+            {title}
+          </h3>
+        </div>
+        {onSearch && (
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-slate-400 sm:max-w-xs">
+            <Search size={15} />
+            <span className="sr-only">Search attendance</span>
+            <input
+              className="min-w-0 flex-1 border-0 p-0 text-xs text-slate-700 outline-none placeholder:text-slate-400 focus:ring-0"
+              value={search}
+              onChange={(event) => onSearch(event.target.value)}
+              placeholder="Search student name or ID"
+            />
+          </label>
+        )}
+      </header>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[670px] border-collapse text-left">
+          <thead>
+            <tr className="bg-slate-50">
+              <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                Name of Student
+              </th>
+              {attendancePeriods.map((period) => (
+                <th
+                  className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500"
+                  key={period.value}
+                >
+                  {period.short}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td
+                  className="px-4 py-8 text-center text-sm text-slate-500"
+                  colSpan={5}
+                >
+                  Loading attendance…
+                </td>
+              </tr>
+            ) : records.length === 0 ? (
+              <tr>
+                <td
+                  className="px-4 py-8 text-center text-sm text-slate-500"
+                  colSpan={5}
+                >
+                  {emptyText}
+                </td>
+              </tr>
+            ) : (
+              records.map((record) => (
+                <tr className="border-t border-slate-100" key={record.id}>
+                  <td className="px-4 py-3">
+                    <strong className="block text-sm font-semibold text-slate-800">
+                      {record.displayName}
+                    </strong>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {record.displayId}
+                    </span>
+                  </td>
+                  {attendancePeriods.map((period) => (
+                    <td
+                      className="px-3 py-3 text-center text-sm font-medium text-slate-700"
+                      key={period.value}
+                    >
+                      {getPeriodTime(record, period.value) || "—"}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
